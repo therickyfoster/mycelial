@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mycelial Strategy Bank — Planetary Restoration</title>
+  <meta name="description" content="A region-agnostic, mycelial strategy bank to untangle corrupt bounty networks and amplify planetary restoration—complete with guardrails, IndexedDB persistence, Habitica integration, and WebLLM prompt-chain blueprints." />
+  <meta name="keywords" content="planetary restoration, integrity, bounty networks, anti-corruption, governance, prompt engineering, WebLLM, Habitica, IndexedDB, blueprint bank, mycelial" />
+  <meta name="robots" content="index,follow" />
+  
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Mycelial Strategy Bank — Planetary Restoration" />
+  <meta property="og:description" content="Region-agnostic prompt-chain blueprints to repair bounty networks and supercharge restoration work." />
+  
+  <style>
+    :root{
+      --bg: #03040a;
+      --panel: rgba(12,16,28,0.72);
+      --glass: rgba(255,255,255,0.10);
+      --stroke: rgba(255,255,255,0.14);
+      --text: #E8ECF2;
+      --muted: #9BA7B4;
+      --accent: #6fe3ff;
+      --accent-2: #9ef7a5;
+      --danger: #ff7a7a;
+      --ok: #78f0c2;
+      --warn: #ffd97a;
+      --code: #0b1020;
+      --glow: drop-shadow(0 0 20px rgba(111,227,255,0.35));
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial}
+    
+    #stars{position:fixed;inset:0;z-index:-2;background:#000}
+    .nebula-overlay{position:fixed;inset:-10%;z-index:-1;pointer-events:none;
+      background: radial-gradient(1200px 700px at 70% 20%, rgba(47,90,255,0.10), transparent 60%),
+                  radial-gradient(900px 600px at 20% 60%, rgba(94,255,190,0.08), transparent 65%),
+                  radial-gradient(600px 400px at 80% 80%, rgba(255,255,255,0.05), transparent 70%);
+      filter: blur(25px) saturate(110%);
+    }
+
+    header{
+      position:sticky;top:0;z-index:10;
+      display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+      padding:14px 20px;border-bottom:1px solid var(--stroke);background:linear-gradient(180deg, rgba(3,4,10,0.7), rgba(3,4,10,0.35));
+      backdrop-filter: blur(10px);
+    }
+    header h1{margin:0;font-weight:700;letter-spacing:0.2px;font-size:22px}
+    header .tag{font-size:12px;color:var(--muted)}
+    
+    .header-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    
+    .row{display:grid;grid-template-columns:340px 1fr 380px;gap:16px;padding:18px;max-width:1600px;margin:0 auto}
+    @media (max-width:1200px){ .row{grid-template-columns:1fr; } }
+
+    .card{
+      background:linear-gradient(180deg, var(--panel), rgba(12,16,28,0.35));
+      border:1px solid var(--stroke);border-radius:14px;padding:18px;backdrop-filter:blur(8px);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.02) inset;
+      margin-bottom:16px;
+    }
+    .card h2,.card h3{margin:0 0 12px 0}
+    .card h2{font-size:18px}
+    .card h3{font-size:15px;color:var(--muted)}
+    
+    .pill{display:inline-flex;gap:6px;align-items:center;padding:4px 10px;border:1px solid var(--stroke);border-radius:999px;font-size:12px;color:var(--muted)}
+    .pill.success{border-color:var(--ok);color:var(--ok)}
+    .pill.warning{border-color:var(--warn);color:var(--warn)}
+    .pill.danger{border-color:var(--danger);color:var(--danger)}
+    
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      padding:10px 14px;border:1px solid var(--stroke);border-radius:10px;background:var(--glass);color:var(--text);
+      cursor:pointer;user-select:none;transition:transform .05s ease, background .2s ease;
+      font-size:14px;white-space:nowrap;
+    }
+    .btn:hover{transform:translateY(-1px);filter:var(--glow)}
+    .btn:active{transform:translateY(0)}
+    .btn:disabled{opacity:0.5;cursor:not-allowed}
+    .btn.primary{border-color:rgba(111,227,255,0.45);background:linear-gradient(180deg, rgba(111,227,255,0.10), rgba(111,227,255,0.04))}
+    .btn.danger{border-color: rgba(255,122,122,0.4); color:var(--danger)}
+    .btn.small{padding:6px 10px;font-size:12px}
+    
+    input, select, textarea{
+      width:100%;padding:10px;border-radius:10px;border:1px solid var(--stroke);background:rgba(10,14,24,0.65);color:var(--text);outline:none;
+      font-size:14px;font-family:inherit;
+    }
+    input:focus, select:focus, textarea:focus{border-color:var(--accent)}
+    label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
+    textarea{min-height:110px;resize:vertical}
+    
+    .cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .form-group{margin-bottom:12px}
+    
+    .list{display:flex;flex-direction:column;gap:8px;max-height:48vh;overflow:auto;padding:2px}
+    .list .item{padding:12px;border-radius:10px;border:1px solid var(--stroke);cursor:pointer;background:rgba(255,255,255,0.03);transition:all .2s ease}
+    .list .item:hover{background:rgba(255,255,255,0.08);border-color:var(--accent)}
+    .list .item.active{background:rgba(111,227,255,0.1);border-color:var(--accent)}
+    .item small{color:var(--muted);display:block;margin-top:4px}
+    .item .actions{display:flex;gap:6px;margin-top:8px}
+    
+    .monospace{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;background:var(--code);border-radius:10px;padding:12px;overflow:auto;font-size:13px;line-height:1.5}
+    
+    .footer{max-width:1600px;margin:20px auto;padding:0 18px 40px;color:var(--muted);font-size:12px;line-height:1.6}
+    .kicker{color:var(--accent);text-transform:uppercase;font-weight:700;letter-spacing:0.1em;font-size:11px;margin-bottom:8px}
+    
+    .progress{height:8px;background:rgba(255,255,255,0.07);border-radius:8px;overflow:hidden;margin:12px 0}
+    .progress>span{display:block;height:100%;background:linear-gradient(90deg, var(--accent), var(--accent-2));width:0%;transition:width .3s ease}
+
+    .tabs{display:flex;gap:8px;margin-bottom:12px;border-bottom:1px solid var(--stroke)}
+    .tab{padding:8px 16px;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted);transition:all .2s}
+    .tab:hover{color:var(--text)}
+    .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+    
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+    
+    .alert{padding:12px;border-radius:10px;margin-bottom:12px;border:1px solid}
+    .alert.info{background:rgba(111,227,255,0.1);border-color:var(--accent);color:var(--accent)}
+    .alert.warning{background:rgba(255,217,122,0.1);border-color:var(--warn);color:var(--warn)}
+    .alert.danger{background:rgba(255,122,122,0.1);border-color:var(--danger);color:var(--danger)}
+    .alert.success{background:rgba(120,240,194,0.1);border-color:var(--ok);color:var(--ok)}
+    
+    details{margin:12px 0}
+    summary{cursor:pointer;padding:8px;border-radius:8px;border:1px solid var(--stroke);user-select:none}
+    summary:hover{background:rgba(255,255,255,0.05)}
+    details[open] summary{margin-bottom:12px}
+    
+    .badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;text-transform:uppercase}
+    .badge.new{background:var(--accent-2);color:#000}
+    
+    .tooltip{position:relative;cursor:help}
+    .tooltip:hover::after{content:attr(data-tip);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
+      padding:6px 10px;background:rgba(0,0,0,0.9);border:1px solid var(--stroke);border-radius:6px;
+      white-space:nowrap;font-size:12px;z-index:100;margin-bottom:4px}
+    
+    .loading-spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--stroke);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    
+    .lang-selector{position:relative}
+    .lang-dropdown{position:absolute;top:100%;right:0;background:var(--panel);border:1px solid var(--stroke);border-radius:10px;
+      padding:8px;margin-top:4px;display:none;min-width:180px;backdrop-filter:blur(8px);z-index:100}
+    .lang-selector.active .lang-dropdown{display:block}
+    .lang-option{padding:8px 12px;cursor:pointer;border-radius:6px;display:flex;align-items:center;gap:8px}
+    .lang-option:hover{background:rgba(255,255,255,0.1)}
+    .lang-option.active{background:rgba(111,227,255,0.15);color:var(--accent)}
+    
+    .stat-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));gap:10px;margin:12px 0}
+    .stat{padding:12px;background:rgba(255,255,255,0.03);border:1px solid var(--stroke);border-radius:8px;text-align:center}
+    .stat-value{font-size:24px;font-weight:700;color:var(--accent)}
+    .stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;margin-top:4px}
+    
+    .timeline{position:relative;padding-left:20px;margin:12px 0}
+    .timeline::before{content:'';position:absolute;left:6px;top:0;bottom:0;width:2px;background:var(--stroke)}
+    .timeline-item{position:relative;padding:8px 0 8px 16px;margin-bottom:12px}
+    .timeline-item::before{content:'';position:absolute;left:-18px;top:12px;width:10px;height:10px;
+      border-radius:50%;background:var(--accent);border:2px solid var(--bg)}
+    .timeline-time{font-size:11px;color:var(--muted)}
+    
+    @media print{
+      header, .btn, .lang-selector{display:none}
+      .card{break-inside:avoid}
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stars" aria-hidden="true"></canvas>
+  <div class="nebula-overlay" aria-hidden="true"></div>
+
+  <header>
+    <div>
+      <h1 data-i18n="app.title">Mycelial Strategy Bank</h1>
+      <div class="tag" data-i18n="app.tagline">Region‑agnostic prompt‑chain blueprints • indexed • succession‑safe</div>
+    </div>
+    <div class="header-actions">
+      <div class="lang-selector" id="langSelector">
+        <button class="btn small" id="langBtn">
+          <span id="currentLang">🌐 EN</span>
+        </button>
+        <div class="lang-dropdown" id="langDropdown"></div>
+      </div>
+      <button id="btnSync" class="btn small" data-i18n="header.sync" title="Sync data">
+        <span>↻</span> Sync
+      </button>
+      <button id="btnSuccession" class="btn small" data-i18n="header.succession">Succession Mode</button>
+      <button id="btnExport" class="btn small" data-i18n="header.export">Export JSON</button>
+      <label class="btn small" for="importFile" data-i18n="header.import">Import</label>
+      <input id="importFile" type="file" accept=".json" style="display:none" />
+    </div>
+  </header>
+
+  <main class="row">
+    <!-- Left: Strategy Bank -->
+    <section>
+      <div class="card" id="bankCard">
+        <div class="kicker" data-i18n="bank.kicker">Bank</div>
+        <h2 data-i18n="bank.title">Strategy Library</h2>
+        
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="stat-value" id="stratCount">0</div>
+            <div class="stat-label" data-i18n="bank.stats.strategies">Strategies</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="bpCount">0</div>
+            <div class="stat-label" data-i18n="bank.stats.blueprints">Blueprints</div>
+          </div>
+        </div>
+        
+        <div class="tabs">
+          <div class="tab active" data-tab="strategies" data-i18n="bank.tabs.strategies">Strategies</div>
+          <div class="tab" data-tab="blueprints" data-i18n="bank.tabs.blueprints">Blueprints</div>
+        </div>
+        
+        <div class="tab-content active" id="strategiesTab">
+          <input type="search" id="stratSearch" placeholder="Search strategies..." data-i18n-placeholder="bank.search" style="margin-bottom:10px" />
+          <div class="list" id="strategyList"></div>
+          <hr style="border-color:var(--stroke);opacity:.6;margin:12px 0">
+          
+          <div class="form-group">
+            <label for="newTitle" data-i18n="bank.form.title">Title</label>
+            <input id="newTitle" data-i18n-placeholder="bank.form.titlePlaceholder" />
+          </div>
+          
+          <div class="form-group">
+            <label for="newTag" data-i18n="bank.form.tags">Tags (comma-separated)</label>
+            <input id="newTag" data-i18n-placeholder="bank.form.tagsPlaceholder" />
+          </div>
+          
+          <div class="form-group">
+            <label for="newBody" data-i18n="bank.form.notes">Notes / Rationale</label>
+            <textarea id="newBody" data-i18n-placeholder="bank.form.notesPlaceholder"></textarea>
+          </div>
+          
+          <div style="display:flex;gap:8px">
+            <button id="btnAddStrategy" class="btn primary" data-i18n="bank.form.add">Add Strategy</button>
+            <button id="btnClearForm" class="btn small" data-i18n="bank.form.clear">Clear</button>
+          </div>
+        </div>
+        
+        <div class="tab-content" id="blueprintsTab">
+          <div class="list" id="blueprintList"></div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="kicker" data-i18n="activity.kicker">Activity</div>
+        <h2 data-i18n="activity.title">Recent Activity</h2>
+        <div class="timeline" id="activityLog"></div>
+      </div>
+    </section>
+
+    <!-- Center: Blueprint Runner -->
+    <section>
+      <div class="card" id="runnerCard">
+        <div class="kicker" data-i18n="runner.kicker">Blueprints</div>
+        <h2>
+          <span data-i18n="runner.title">Prompt‑Chain Runner</span>
+          <span class="pill" id="modelPill">LLM: <span data-i18n="runner.pending">pending</span></span>
+        </h2>
+
+        <div class="cols">
+          <div class="form-group">
+            <label for="blueprintSelect" data-i18n="runner.blueprint">Blueprint</label>
+            <select id="blueprintSelect"></select>
+          </div>
+          <div class="form-group">
+            <label for="modelSelect" data-i18n="runner.model">Local Model (WebLLM)</label>
+            <select id="modelSelect">
+              <option value="Llama-3.1-8B-Instruct">Llama‑3.1‑8B‑Instruct</option>
+              <option value="Phi-3-mini-4k-instruct">Phi‑3‑mini‑4k‑instruct</option>
+              <option value="Gemma-2B-it">Gemma‑2B‑it</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="context" data-i18n="runner.context">Context (region‑agnostic)</label>
+          <textarea id="context" data-i18n-placeholder="runner.contextPlaceholder"></textarea>
+        </div>
+
+        <div class="progress"><span id="loadProgress"></span></div>
+        
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button id="btnInitLLM" class="btn" data-i18n="runner.init">Init Model</button>
+          <button id="btnRunStep" class="btn primary" data-i18n="runner.runStep">Run Next Step</button>
+          <button id="btnResetRun" class="btn small" data-i18n="runner.reset">Reset</button>
+          <span class="pill" id="gpuInfoPill">GPU: <span data-i18n="runner.gpuNA">n/a</span></span>
+        </div>
+
+        <div id="stepMeta" class="pill" style="margin-top:12px" data-i18n="runner.stepNA">Step: n/a</div>
+        
+        <div style="margin-top:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <label style="margin:0" data-i18n="runner.output">Output</label>
+            <div style="display:flex;gap:6px">
+              <button id="btnCopyOut" class="btn small" data-i18n="runner.copy">Copy</button>
+              <button id="btnSaveStep" class="btn small" data-i18n="runner.save">Save</button>
+            </div>
+          </div>
+          <pre class="monospace" id="runnerOutput" style="min-height:280px" aria-live="polite"></pre>
+        </div>
+
+        <details style="margin-top:14px">
+          <summary class="pill" data-i18n="runner.guardrails">Guardrails (active)</summary>
+          <div style="font-size:13px;color:var(--muted);margin-top:12px;line-height:1.6">
+            <ul style="margin:0;padding-left:20px">
+              <li data-i18n="guardrails.1">No doxxing or personal targeting</li>
+              <li data-i18n="guardrails.2">No illicit access, bribery, or vigilantism</li>
+              <li data-i18n="guardrails.3">Prefer public, auditable sources</li>
+              <li data-i18n="guardrails.4">De‑identify sensitive examples</li>
+              <li data-i18n="guardrails.5">Route violations to legitimate oversight</li>
+              <li data-i18n="guardrails.6">Keep designs region‑agnostic</li>
+            </ul>
+          </div>
+        </details>
+      </div>
+      
+      <div class="card">
+        <div class="kicker" data-i18n="analysis.kicker">Analysis</div>
+        <h2 data-i18n="analysis.title">Run Insights</h2>
+        <div id="analysisContent">
+          <div class="alert info" data-i18n="analysis.noData">No analysis data yet. Run a blueprint to see insights.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Integrations & Tools -->
+    <aside>
+      <!-- Habitica -->
+      <div class="card">
+        <div class="kicker" data-i18n="habitica.kicker">Habitica</div>
+        <h2 data-i18n="habitica.title">Task Bridge</h2>
+        
+        <div class="form-group">
+          <label for="habiticaUser" data-i18n="habitica.userId">User ID</label>
+          <input id="habiticaUser" data-i18n-placeholder="habitica.userIdPlaceholder" />
+        </div>
+        
+        <div class="form-group">
+          <label for="habiticaKey" data-i18n="habitica.apiKey">API Token (kept local)</label>
+          <input id="habiticaKey" type="password" data-i18n-placeholder="habitica.apiKeyPlaceholder" />
+        </div>
+        
+        <div class="form-group">
+          <label for="habiticaClient" data-i18n="habitica.clientId">x-client (tool identifier)</label>
+          <input id="habiticaClient" data-i18n-placeholder="habitica.clientIdPlaceholder" />
+        </div>
+        
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button id="btnSaveHabitica" class="btn small" data-i18n="habitica.save">Save</button>
+          <button id="btnFetchTodos" class="btn small" data-i18n="habitica.fetch">Fetch</button>
+        </div>
+
+        <div class="form-group">
+          <label for="todoText" data-i18n="habitica.createTitle">Create To‑Do</label>
+          <input id="todoText" data-i18n-placeholder="habitica.createTitlePlaceholder" />
+        </div>
+        
+        <div class="form-group">
+          <label for="todoNotes" data-i18n="habitica.notes">Notes</label>
+          <textarea id="todoNotes" rows="3" data-i18n-placeholder="habitica.notesPlaceholder"></textarea>
+        </div>
+        
+        <button id="btnCreateTodo" class="btn primary" data-i18n="habitica.create">Push To‑Do</button>
+
+        <details style="margin-top:12px">
+          <summary class="pill" data-i18n="habitica.todosTitle">To‑Dos</summary>
+          <div id="todos" class="list" style="max-height:28vh;margin-top:12px"></div>
+        </details>
+      </div>
+
+      <!-- Succession -->
+      <div class="card" id="successionCard" style="display:none">
+        <div class="kicker" data-i18n="succession.kicker">Succession</div>
+        <h2 data-i18n="succession.title">Next‑Gen Boot Protocol</h2>
+        <ol style="padding-left:18px;margin:10px 0;font-size:13px;line-height:1.7">
+          <li data-i18n="succession.step1">Export JSON backup; mirror it (IPFS/S3/Git)</li>
+          <li data-i18n="succession.step2">Review guardrails; sign ethics affidavit</li>
+          <li data-i18n="succession.step3">Fork blueprints; keep region‑agnostic</li>
+          <li data-i18n="succession.step4">Run "Integrity First" before any ops</li>
+          <li data-i18n="succession.step5">Use public oversight for violations</li>
+        </ol>
+        <button id="btnEthics" class="btn primary" data-i18n="succession.sign">Sign Ethics Affidavit</button>
+        <div id="ethicsStatus" style="margin-top:8px;font-size:12px;color:var(--muted)"></div>
+      </div>
+
+      <!-- Settings -->
+      <div class="card">
+        <div class="kicker" data-i18n="settings.kicker">Settings</div>
+        <h2 data-i18n="settings.title">Preferences</h2>
+        
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="autoSave" checked style="width:auto;margin-right:6px" />
+            <span data-i18n="settings.autoSave">Auto-save outputs</span>
+          </label>
+        </div>
+        
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="darkMode" checked style="width:auto;margin-right:6px" />
+            <span data-i18n="settings.darkMode">Dark mode</span>
+          </label>
+        </div>
+        
+        <div class="form-group">
+          <label for="temperature" data-i18n="settings.temperature">LLM Temperature</label>
+          <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7" style="width:100%" />
+          <small id="tempValue" style="color:var(--muted)">0.7</small>
+        </div>
+        
+        <button id="btnClearCache" class="btn danger small" data-i18n="settings.clearCache">Clear Cache</button>
+      </div>
+
+      <!-- Help -->
+      <div class="card">
+        <div class="kicker" data-i18n="help.kicker">Help</div>
+        <h2 data-i18n="help.title">Quick Guide</h2>
+        <details>
+          <summary class="pill" data-i18n="help.gettingStarted">Getting Started</summary>
+          <div style="font-size:13px;margin-top:12px;line-height:1.6;color:var(--muted)" data-i18n="help.gettingStartedContent">
+            1. Initialize the LLM model<br>
+            2. Select a blueprint<br>
+            3. Provide context<br>
+            4. Run steps sequentially<br>
+            5. Save outputs and create tasks
+          </div>
+        </details>
+        <details style="margin-top:8px">
+          <summary class="pill" data-i18n="help.safety">Safety & Privacy</summary>
+          <div style="font-size:13px;margin-top:12px;line-height:1.6;color:var(--muted)" data-i18n="help.safetyContent">
+            All data is stored locally in IndexedDB. Your API keys never leave your device. The system includes automatic PII redaction and policy enforcement.
+          </div>
+        </details>
+      </div>
+    </aside>
+  </main>
+
+  <div class="footer">
+    <strong data-i18n="footer.safety">Safety & Legality:</strong>
+    <span data-i18n="footer.disclaimer">This toolkit is for lawful integrity improvements in public‑good systems. It blocks PII‑leaking outputs and suggests procedural, transparent fixes. You own your keys; data is local unless you explicitly sync.</span>
+    <div style="margin-top:8px">
+      <span data-i18n="footer.version">Version 2.0.0</span> • 
+      <a href="#" style="color:var(--accent)" data-i18n="footer.docs">Documentation</a> • 
+      <a href="#" style="color:var(--accent)" data-i18n="footer.license">License</a>
+    </div>
+  </div>
+
+  <script type="module">
+    /* ========== INTERNATIONALIZATION ========== */
+    const translations = {
+      en: {
+        app: {
+          title: "Mycelial Strategy Bank",
+          tagline: "Region‑agnostic prompt‑chain blueprints • indexed • succession‑safe"
+        },
+        header: {
+          sync: "Sync",
+          succession: "Succession Mode",
+          export: "Export JSON",
+          import: "Import"
+        },
+        bank: {
+          kicker: "Bank",
+          title: "Strategy Library",
+          stats: { 
+            strategies: "Strategies",
+            blueprints: "Blueprints"
+          },
+          tabs: {
+            strategies: "Strategies",
+            blueprints: "Blueprints"
+          },
+          search: "Search strategies...",
+          form: {
+            title: "Title",
+            titlePlaceholder: "e.g., Transparent Multi‑Sig Bounty Escrow",
+            tags: "Tags (comma-separated)",
+            tagsPlaceholder: "mechanism-design, integrity, MRV",
+            notes: "Notes / Rationale",
+            notesPlaceholder: "What pattern, what failure mode it fixes, minimal mechanism, safeguards.",
+            add: "Add Strategy",
+            clear: "Clear"
+          }
+        },
+        activity: {
+          kicker: "Activity",
+          title: "Recent Activity"
+        },
+        runner: {
+          kicker: "Blueprints",
+          title: "Prompt‑Chain Runner",
+          pending: "pending",
+          blueprint: "Blueprint",
+          model: "Local Model (WebLLM)",
+          context: "Context (region‑agnostic)",
+          contextPlaceholder: "Describe the bounty network, public goods goals, constraints, current integrity failures, and target outcomes. Avoid PII.",
+          init: "Init Model",
+          runStep: "Run Next Step",
+          reset: "Reset",
+          gpuNA: "n/a",
+          stepNA: "Step: n/a",
+          output: "Output",
+          copy: "Copy",
+          save: "Save",
+          guardrails: "Guardrails (active)"
+        },
+        guardrails: {
+          1: "No doxxing or personal targeting",
+          2: "No illicit access, bribery, or vigilantism",
+          3: "Prefer public, auditable sources; flag uncertainty & conflicts",
+          4: "De‑identify sensitive examples",
+          5: "Route actionable violations to legitimate oversight channels",
+          6: "Keep designs region‑agnostic; consult local counsel before deployment"
+        },
+        analysis: {
+          kicker: "Analysis",
+          title: "Run Insights",
+          noData: "No analysis data yet. Run a blueprint to see insights."
+        },
+        habitica: {
+          kicker: "Habitica",
+          title: "Task Bridge",
+          userId: "User ID",
+          userIdPlaceholder: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+          apiKey: "API Token (kept local)",
+          apiKeyPlaceholder: "never share this",
+          clientId: "x-client (tool identifier)",
+          clientIdPlaceholder: "your-user-id-MycelialStrategyBank",
+          save: "Save",
+          fetch: "Fetch",
+          createTitle: "Create To‑Do",
+          createTitlePlaceholder: "Short task title (auto-fills from step)",
+          notes: "Notes",
+          notesPlaceholder: "Notes will include a permalink to the saved step and guardrails.",
+          create: "Push To‑Do",
+          todosTitle: "To‑Dos"
+        },
+        succession: {
+          kicker: "Succession",
+          title: "Next‑Gen Boot Protocol",
+          step1: "Export the JSON backup; mirror it (IPFS / S3 / Git)",
+          step2: "Review guardrails; sign the ethics affidavit locally",
+          step3: "Fork blueprints; keep them region‑agnostic; add citations",
+          step4: "Run the 'Integrity First' blueprint before any ops",
+          step5: "Use public oversight channels for violations—never extrajudicial action",
+          sign: "Sign Ethics Affidavit (local)",
+          signed: "✓ Ethics affidavit signed on"
+        },
+        settings: {
+          kicker: "Settings",
+          title: "Preferences",
+          autoSave: "Auto-save outputs",
+          darkMode: "Dark mode",
+          temperature: "LLM Temperature",
+          clearCache: "Clear Cache"
+        },
+        help: {
+          kicker: "Help",
+          title: "Quick Guide",
+          gettingStarted: "Getting Started",
+          gettingStartedContent: "1. Initialize the LLM model<br>2. Select a blueprint<br>3. Provide context<br>4. Run steps sequentially<br>5. Save outputs and create tasks",
+          safety: "Safety & Privacy",
+          safetyContent: "All data is stored locally in IndexedDB. Your API keys never leave your device. The system includes automatic PII redaction and policy enforcement."
+        },
+        footer: {
+          safety: "Safety & Legality:",
+          disclaimer: "This toolkit is for lawful integrity improvements in public‑good systems. It blocks PII‑leaking outputs and suggests procedural, transparent fixes. You own your keys; data is local unless you explicitly sync.",
+          version: "Version 2.0.0",
+          docs: "Documentation",
+          license: "License"
+        }
+      },
+      es: {
+        app: {
+          title: "Banco de Estrategias Micelial",
+          tagline: "Plantillas de cadena de prompts independientes de región • indexadas • sucesión segura"
+        },
+        header: {
+          sync: "Sincronizar",
+          succession: "Modo Sucesión",
+          export: "Exportar JSON",
+          import: "Importar"
+        },
+        bank: {
+          kicker: "Banco",
+          title: "Biblioteca de Estrategias",
+          stats: {
+            strategies: "Estrategias",
+            blueprints: "Plantillas"
+          },
+          tabs: {
+            strategies: "Estrategias",
+            blueprints: "Plantillas"
+          },
+          search: "Buscar estrategias...",
+          form: {
+            title: "Título",
+            titlePlaceholder: "ej., Depósito en Garantía Multi‑Firma Transparente",
+            tags: "Etiquetas (separadas por comas)",
+            tagsPlaceholder: "diseño-mecanismo, integridad, MRV",
+            notes: "Notas / Justificación",
+            notesPlaceholder: "Qué patrón, qué modo de falla corrige, mecanismo mínimo, salvaguardias.",
+            add: "Agregar Estrategia",
+            clear: "Limpiar"
+          }
+        },
+        activity: {
+          kicker: "Actividad",
+          title: "Actividad Reciente"
+        },
+        runner: {
+          kicker: "Plantillas",
+          title: "Ejecutor de Cadena de Prompts",
+          pending: "pendiente",
+          blueprint: "Plantilla",
+          model: "Modelo Local (WebLLM)",
+          context: "Contexto (independiente de región)",
+          contextPlaceholder: "Describe la red de recompensas, objetivos de bienes públicos, restricciones, fallas actuales de integridad y resultados objetivo. Evita PII.",
+          init: "Iniciar Modelo",
+          runStep: "Ejecutar Siguiente Paso",
+          reset: "Reiniciar",
+          gpuNA: "n/d",
+          stepNA: "Paso: n/d",
+          output: "Salida",
+          copy: "Copiar",
+          save: "Guardar",
+          guardrails: "Salvaguardias (activas)"
+        },
+        guardrails: {
+          1: "Sin doxxing ni objetivos personales",
+          2: "Sin acceso ilícito, soborno o vigilantismo",
+          3: "Preferir fuentes públicas y auditables; señalar incertidumbre y conflictos",
+          4: "Desidentificar ejemplos sensibles",
+          5: "Dirigir violaciones procesables a canales legítimos de supervisión",
+          6: "Mantener diseños independientes de región; consultar abogado local antes del despliegue"
+        },
+        analysis: {
+          kicker: "Análisis",
+          title: "Perspectivas de Ejecución",
+          noData: "Aún no hay datos de análisis. Ejecuta una plantilla para ver perspectivas."
+        },
+        habitica: {
+          kicker: "Habitica",
+          title: "Puente de Tareas",
+          userId: "ID de Usuario",
+          userIdPlaceholder: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+          apiKey: "Token API (guardado localmente)",
+          apiKeyPlaceholder: "nunca compartir esto",
+          clientId: "x-client (identificador de herramienta)",
+          clientIdPlaceholder: "tu-id-usuario-MycelialStrategyBank",
+          save: "Guardar",
+          fetch: "Obtener",
+          createTitle: "Crear Tarea",
+          createTitlePlaceholder: "Título corto de tarea (se completa automáticamente desde el paso)",
+          notes: "Notas",
+          notesPlaceholder: "Las notas incluirán un enlace permanente al paso guardado y las salvaguardias.",
+          create: "Enviar Tarea",
+          todosTitle: "Tareas"
+        },
+        succession: {
+          kicker: "Sucesión",
+          title: "Protocolo de Arranque de Nueva Generación",
+          step1: "Exportar la copia de seguridad JSON; duplicarla (IPFS / S3 / Git)",
+          step2: "Revisar salvaguardias; firmar la declaración ética localmente",
+          step3: "Bifurcar plantillas; mantenerlas independientes de región; agregar citas",
+          step4: "Ejecutar la plantilla 'Integridad Primero' antes de cualquier operación",
+          step5: "Usar canales de supervisión pública para violaciones—nunca acción extrajudicial",
+          sign: "Firmar Declaración Ética (local)",
+          signed: "✓ Declaración ética firmada el"
+        },
+        settings: {
+          kicker: "Configuración",
+          title: "Preferencias",
+          autoSave: "Autoguardar salidas",
+          darkMode: "Modo oscuro",
+          temperature: "Temperatura LLM",
+          clearCache: "Limpiar Caché"
+        },
+        help: {
+          kicker: "Ayuda",
+          title: "Guía Rápida",
+          gettingStarted: "Comenzando",
+          gettingStartedContent: "1. Inicializar el modelo LLM<br>2. Seleccionar una plantilla<br>3. Proporcionar contexto<br>4. Ejecutar pasos secuencialmente<br>5. Guardar salidas y crear tareas",
+          safety: "Seguridad y Privacidad",
+          safetyContent: "Todos los datos se almacenan localmente en IndexedDB. Tus claves API nunca salen de tu dispositivo. El sistema incluye redacción automática de PII y aplicación de políticas."
+        },
+        footer: {
+          safety: "Seguridad y Legalidad:",
+          disclaimer: "Esta herramienta es para mejoras legales de integridad en sistemas de bienes públicos. Bloquea salidas que filtran PII y sugiere correcciones procedimentales y transparentes. Eres dueño de tus claves; los datos son locales a menos que sincronices explícitamente.",
+          version: "Versión 2.0.0",
+          docs: "Documentación",
+          license: "Licencia"
+        }
+      },
+      fr: {
+        app: {
+          title: "Banque de Stratégies Mycélienne",
+          tagline: "Modèles de chaîne de prompts indépendants de région • indexés • succession sûre"
+        },
+        header: {
+          sync: "Synchroniser",
+          succession: "Mode Succession",
+          export: "Exporter JSON",
+          import: "Importer"
+        },
+        bank: {
+          kicker: "Banque",
+          title: "Bibliothèque de Stratégies",
+          stats: {
+            strategies: "Stratégies",
+            blueprints: "Modèles"
+          },
+          tabs: {
+            strategies: "Stratégies",
+            blueprints: "Modèles"
+          },
+          search: "Rechercher des stratégies...",
+          form: {
+            title: "Titre",
+            titlePlaceholder: "ex., Séquestre Multi‑Signature Transparent",
+            tags: "Étiquettes (séparées par virgule)",
+            tagsPlaceholder: "conception-mécanisme, intégrité, MRV",
+            notes: "Notes / Justification",
+            notesPlaceholder: "Quel modèle, quel mode d'échec corrige-t-il, mécanisme minimal, garanties.",
+            add: "Ajouter Stratégie",
+            clear: "Effacer"
+          }
+        },
+        activity: {
+          kicker: "Activité",
+          title: "Activité Récente"
+        },
+        runner: {
+          kicker: "Modèles",
+          title: "Exécuteur de Chaîne de Prompts",
+          pending: "en attente",
+          blueprint: "Modèle",
+          model: "Modèle Local (WebLLM)",
+          context: "Contexte (indépendant de région)",
+          contextPlaceholder: "Décrivez le réseau de primes, les objectifs de biens publics, les contraintes, les défaillances d'intégrité actuelles et les résultats cibles. Évitez les PII.",
+          init: "Initialiser Modèle",
+          runStep: "Exécuter Étape Suivante",
+          reset: "Réinitialiser",
+          gpuNA: "n/d",
+          stepNA: "Étape: n/d",
+          output: "Sortie",
+          copy: "Copier",
+          save: "Sauvegarder",
+          guardrails: "Garde-fous (actifs)"
+        },
+        guardrails: {
+          1: "Pas de doxxing ou de ciblage personnel",
+          2: "Pas d'accès illicite, de corruption ou de vigilantisme",
+          3: "Préférer les sources publiques et auditables; signaler l'incertitude et les conflits",
+          4: "Désidentifier les exemples sensibles",
+          5: "Diriger les violations actionnables vers des canaux de surveillance légitimes",
+          6: "Garder les conceptions indépendantes de région; consulter un avocat local avant le déploiement"
+        },
+        analysis: {
+          kicker: "Analyse",
+          title: "Aperçus d'Exécution",
+          noData: "Pas encore de données d'analyse. Exécutez un modèle pour voir les aperçus."
+        },
+        habitica: {
+          kicker: "Habitica",
+          title: "Pont de Tâches",
+          userId: "ID Utilisateur",
+          userIdPlaceholder: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+          apiKey: "Jeton API (gardé local)",
+          apiKeyPlaceholder: "ne jamais partager ceci",
+          clientId: "x-client (identifiant d'outil)",
+          clientIdPlaceholder: "votre-id-utilisateur-MycelialStrategyBank",
+          save: "Sauvegarder",
+          fetch: "Récupérer",
+          createTitle: "Créer Tâche",
+          createTitlePlaceholder: "Titre court de tâche (rempli automatiquement depuis l'étape)",
+          notes: "Notes",
+          notesPlaceholder: "Les notes incluront un lien permanent vers l'étape sauvegardée et les garde-fous.",
+          create: "Pousser Tâche",
+          todosTitle: "Tâches"
+        },
+        succession: {
+          kicker: "Succession",
+          title: "Protocole de Démarrage Nouvelle Génération",
+          step1: "Exporter la sauvegarde JSON; la dupliquer (IPFS / S3 / Git)",
+          step2: "Examiner les garde-fous; signer l'affidavit éthique localement",
+          step3: "Forker les modèles; les garder indépendants de région; ajouter des citations",
+          step4: "Exécuter le modèle 'Intégrité d'Abord' avant toute opération",
+          step5: "Utiliser les canaux de surveillance publique pour les violations—jamais d'action extrajudiciaire",
+          sign: "Signer Affidavit Éthique (local)",
+          signed: "✓ Affidavit éthique signé le"
+        },
+        settings: {
+          kicker: "Paramètres",
+          title: "Préférences",
+          autoSave: "Sauvegarde automatique des sorties",
+          darkMode: "Mode sombre",
+          temperature: "Température LLM",
+          clearCache: "Effacer Cache"
+        },
+        help: {
+          kicker: "Aide",
+          title: "Guide Rapide",
+          gettingStarted: "Démarrage",
+          gettingStartedContent: "1. Initialiser le modèle LLM<br>2. Sélectionner un modèle<br>3. Fournir le contexte<br>4. Exécuter les étapes séquentiellement<br>5. Sauvegarder les sorties et créer des tâches",
+          safety: "Sécurité et Confidentialité",
+          safetyContent: "Toutes les données sont stockées localement dans IndexedDB. Vos clés API ne quittent jamais votre appareil. Le système inclut la rédaction automatique des PII et l'application des politiques."
+        },
+        footer: {
+          safety: "Sécurité et Légalité:",
+          disclaimer: "Cet outil est pour des améliorations d'intégrité légales dans les systèmes de biens publics. Il bloque les sorties divulguant des PII et suggère des corrections procédurales et transparentes. Vous possédez vos clés; les données sont locales sauf si vous synchronisez explicitement.",
+          version: "Version 2.0.0",
+          docs: "Documentation",
+          license: "Licence"
+        }
+      },
+      de: {
+        app: {
+          title: "Myzeliale Strategiebank",
+          tagline: "Regionsunabhängige Prompt-Ketten-Vorlagen • indexiert • nachfolgesicher"
+        },
+        header: {
+          sync: "Synchronisieren",
+          succession: "Nachfolgemodus",
+          export: "JSON Exportieren",
+          import: "Importieren"
+        },
+        bank: {
+          kicker: "Bank",
+          title: "Strategiebibliothek",
+          stats: {
+            strategies: "Strategien",
+            blueprints: "Vorlagen"
+          },
+          tabs: {
+            strategies: "Strategien",
+            blueprints: "Vorlagen"
+          },
+          search: "Strategien suchen...",
+          form: {
+            title: "Titel",
+            titlePlaceholder: "z.B., Transparentes Multi-Sig Treuhand",
+            tags: "Tags (kommagetrennt)",
+            tagsPlaceholder: "mechanismus-design, integrität, MRV",
+            notes: "Notizen / Begründung",
+            notesPlaceholder: "Welches Muster, welchen Fehlermodus behebt es, minimaler Mechanismus, Schutzmaßnahmen.",
+            add: "Strategie Hinzufügen",
+            clear: "Löschen"
+          }
+        },
+        activity: {
+          kicker: "Aktivität",
+          title: "Letzte Aktivität"
+        },
+        runner: {
+          kicker: "Vorlagen",
+          title: "Prompt-Ketten-Ausführer",
+          pending: "ausstehend",
+          blueprint: "Vorlage",
+          model: "Lokales Modell (WebLLM)",
+          context: "Kontext (regionsunabhängig)",
+          contextPlaceholder: "Beschreiben Sie das Belohnungsnetzwerk, Ziele öffentlicher Güter, Einschränkungen, aktuelle Integritätsfehler und Zielergebnisse. Vermeiden Sie PII.",
+          init: "Modell Initialisieren",
+          runStep: "Nächsten Schritt Ausführen",
+          reset: "Zurücksetzen",
+          gpuNA: "n/v",
+          stepNA: "Schritt: n/v",
+          output: "Ausgabe",
+          copy: "Kopieren",
+          save: "Speichern",
+          guardrails: "Schutzmaßnahmen (aktiv)"
+        },
+        guardrails: {
+          1: "Kein Doxxing oder persönliche Zielrichtung",
+          2: "Kein unerlaubter Zugriff, Bestechung oder Selbstjustiz",
+          3: "Öffentliche, prüfbare Quellen bevorzugen; Unsicherheit und Konflikte kennzeichnen",
+          4: "Sensible Beispiele anonymisieren",
+          5: "Verstöße an legitime Aufsichtskanäle leiten",
+          6: "Designs regionsunabhängig halten; lokalen Rechtsberater vor Einsatz konsultieren"
+        },
+        analysis: {
+          kicker: "Analyse",
+          title: "Ausführungseinblicke",
+          noData: "Noch keine Analysedaten. Führen Sie eine Vorlage aus, um Einblicke zu sehen."
+        },
+        habitica: {
+          kicker: "Habitica",
+          title: "Aufgabenbrücke",
+          userId: "Benutzer-ID",
+          userIdPlaceholder: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+          apiKey: "API-Token (lokal gespeichert)",
+          apiKeyPlaceholder: "niemals teilen",
+          clientId: "x-client (Werkzeugidentifikator)",
+          clientIdPlaceholder: "ihre-benutzer-id-MycelialStrategyBank",
+          save: "Speichern",
+          fetch: "Abrufen",
+          createTitle: "Aufgabe Erstellen",
+          createTitlePlaceholder: "Kurzer Aufgabentitel (wird automatisch vom Schritt ausgefüllt)",
+          notes: "Notizen",
+          notesPlaceholder: "Notizen enthalten einen Permalink zum gespeicherten Schritt und Schutzmaßnahmen.",
+          create: "Aufgabe Übertragen",
+          todosTitle: "Aufgaben"
+        },
+        succession: {
+          kicker: "Nachfolge",
+          title: "Nächste-Generation-Startprotokoll",
+          step1: "JSON-Backup exportieren; spiegeln (IPFS / S3 / Git)",
+          step2: "Schutzmaßnahmen prüfen; Ethik-Affidavit lokal unterzeichnen",
+          step3: "Vorlagen forken; regionsunabhängig halten; Zitate hinzufügen",
+          step4: "Die 'Integrität Zuerst'-Vorlage vor allen Ops ausführen",
+          step5: "Öffentliche Aufsichtskanäle für Verstöße nutzen—niemals außergerichtliche Maßnahmen",
+          sign: "Ethik-Affidavit Unterzeichnen (lokal)",
+          signed: "✓ Ethik-Affidavit unterzeichnet am"
+        },
+        settings: {
+          kicker: "Einstellungen",
+          title: "Präferenzen",
+          autoSave: "Ausgaben automatisch speichern",
+          darkMode: "Dunkler Modus",
+          temperature: "LLM-Temperatur",
+          clearCache: "Cache Löschen"
+        },
+        help: {
+          kicker: "Hilfe",
+          title: "Schnellanleitung",
+          gettingStarted: "Erste Schritte",
+          gettingStartedContent: "1. LLM-Modell initialisieren<br>2. Vorlage auswählen<br>3. Kontext bereitstellen<br>4. Schritte sequenziell ausführen<br>5. Ausgaben speichern und Aufgaben erstellen",
+          safety: "Sicherheit & Datenschutz",
+          safetyContent: "Alle Daten werden lokal in IndexedDB gespeichert. Ihre API-Schlüssel verlassen niemals Ihr Gerät. Das System enthält automatische PII-Schwärzung und Richtliniendurchsetzung."
+        },
+        footer: {
+          safety: "Sicherheit & Rechtmäßigkeit:",
+          disclaimer: "Dieses Werkzeug dient rechtmäßigen Integritätsverbesserungen in Systemen öffentlicher Güter. Es blockiert PII-Lecks und schlägt prozedurale, transparente Korrekturen vor. Sie besitzen Ihre Schlüssel; Daten sind lokal, es sei denn, Sie synchronisieren explizit.",
+          version: "Version 2.0.0",
+          docs: "Dokumentation",
+          license: "Lizenz"
+        }
+      },
+      zh: {
+        app: {
+          title: "菌丝体战略银行",
+          tagline: "区域无关的提示链蓝图 • 已索引 • 继承安全"
+        },
+        header: {
+          sync: "同步",
+          succession: "继承模式",
+          export: "导出JSON",
+          import: "导入"
+        },
+        bank: {
+          kicker: "银行",
+          title: "战略库",
+          stats: {
+            strategies: "战略",
+            blueprints: "蓝图"
+          },
+          tabs: {
+            strategies: "战略",
+            blueprints: "蓝图"
+          },
+          search: "搜索战略...",
+          form: {
+            title: "标题",
+            titlePlaceholder: "例如，透明多重签名托管",
+            tags: "标签（逗号分隔）",
+            tagsPlaceholder: "机制设计，完整性，MRV",
+            notes: "注释/理由",
+            notesPlaceholder: "什么模式，它修复了什么故障模式，最小机制，保障措施。",
+            add: "添加战略",
+            clear: "清除"
+          }
+        },
+        activity: {
+          kicker: "活动",
+          title: "最近活动"
+        },
+        runner: {
+          kicker: "蓝图",
+          title: "提示链运行器",
+          pending: "待处理",
+          blueprint: "蓝图",
+          model: "本地模型（WebLLM）",
+          context: "上下文（区域无关）",
+          contextPlaceholder: "描述赏金网络、公共产品目标、约束、当前完整性故障和目标结果。避免PII。",
+          init: "初始化模型",
+          runStep: "运行下一步",
+          reset: "重置",
+          gpuNA: "不适用",
+          stepNA: "步骤：不适用",
+          output: "输出",
+          copy: "复制",
+          save: "保存",
+          guardrails: "护栏（激活）"
+        },
+        guardrails: {
+          1: "不进行人肉搜索或个人针对",
+          2: "不进行非法访问、贿赂或私刑",
+          3: "优先使用公开、可审计的来源；标记不确定性和冲突",
+          4: "去标识化敏感示例",
+          5: "将可诉违规行为导向合法监督渠道",
+          6: "保持设计区域无关；部署前咨询当地法律顾问"
+        },
+        analysis: {
+          kicker: "分析",
+          title: "运行见解",
+          noData: "尚无分析数据。运行蓝图以查看见解。"
+        },
+        habitica: {
+          kicker: "Habitica",
+          title: "任务桥",
+          userId: "用户ID",
+          userIdPlaceholder: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+          apiKey: "API令牌（本地保存）",
+          apiKeyPlaceholder: "切勿分享此内容",
+          clientId: "x-client（工具标识符）",
+          clientIdPlaceholder: "你的用户ID-MycelialStrategyBank",
+          save: "保存",
+          fetch: "获取",
+          createTitle: "创建待办",
+          createTitlePlaceholder: "简短任务标题（从步骤自动填充）",
+          notes: "注释",
+          notesPlaceholder: "注释将包括已保存步骤的永久链接和护栏。",
+          create: "推送待办",
+          todosTitle: "待办事项"
+        },
+        succession: {
+          kicker: "继承",
+          title: "下一代启动协议",
+          step1: "导出JSON备份；镜像它（IPFS / S3 / Git）",
+          step2: "审查护栏；在本地签署道德宣誓书",
+          step3: "分叉蓝图；保持区域无关；添加引用",
+          step4: "在任何操作之前运行"完整性优先"蓝图",
+          step5: "使用公共监督渠道处理违规行为——绝不采取法外行动",
+          sign: "签署道德宣誓书（本地）",
+          signed: "✓ 道德宣誓书签署于"
+        },
+        settings: {
+          kicker: "设置",
+          title: "首选项",
+          autoSave: "自动保存输出",
+          darkMode: "深色模式",
+          temperature: "LLM温度",
+          clearCache: "清除缓存"
+        },
+        help: {
+          kicker: "帮助",
+          title: "快速指南",
+          gettingStarted: "入门",
+          gettingStartedContent: "1. 初始化LLM模型<br>2. 选择蓝图<br>3. 提供上下文<br>4. 按顺序运行步骤<br>5. 保存输出并创建任务",
+          safety: "安全与隐私",
+          safetyContent: "所有数据都存储在IndexedDB中。您的API密钥永远不会离开您的设备。系统包括自

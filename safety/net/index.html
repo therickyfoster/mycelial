@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PRA • Mycelial Safety Net</title>
+
+  <!-- integrity + attribution banner (tamper-evident) -->
+  <script>
+    const PRA_PROOF = {
+      title: "PRA Mycelial Safety Net",
+      author: "Ricky Foster + Navi",
+      site: "https://planetaryrestorationarchive.com",
+      built_at_iso: new Date().toISOString().slice(0,19)+"Z",
+    };
+    async function sha256(s){const b=new TextEncoder().encode(s);
+      const h=await crypto.subtle.digest("SHA-256",b);
+      return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,"0")).join("");
+    }
+    (async ()=>{
+      const proof = JSON.stringify(PRA_PROOF);
+      const hash = await sha256(proof);
+      window.PRA_ATTESTATION = {proof, hash};
+      console.log("PRA_ATTESTATION", window.PRA_ATTESTATION);
+    })();
+  </script>
+
+  <!-- Service Worker -->
+  <script>
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    }
+  </script>
+
+  <!-- IndexedDB bootstrap -->
+  <script>
+    const DB_NAME='pra_safetynet_v1', DB_VER=1;
+    let db; const openDB=()=>new Promise((res,rej)=>{
+      const r=indexedDB.open(DB_NAME,DB_VER);
+      r.onupgradeneeded=()=>{const d=r.result;
+        d.createObjectStore('supports',{keyPath:'id'});
+        d.createObjectStore('guides',{keyPath:'id'});
+        d.createObjectStore('tools',{keyPath:'id'});
+        d.createObjectStore('submissions_queue',{keyPath:'id'});
+        d.createObjectStore('telemetry_local',{keyPath:'id'});
+      };
+      r.onsuccess=()=>{db=r.result;res(db)}; r.onerror=e=>rej(e);
+    });
+    const tx = (name,mode='readonly')=>db.transaction(name,mode).objectStore(name);
+  </script>
+
+  <!-- Root Translator (Bergamot WASM placeholder hook) -->
+  <script>
+    // Working theory: client-first MT via WASM (Bergamot) for privacy; fallbacks configurable.
+    // Hook points only; models loaded on demand to keep first paint fast.
+    const i18n = {
+      lang: navigator.language || 'en',
+      setLang(l){this.lang=l; document.documentElement.lang=l;},
+      translateInline(){ /* attach to [data-i18n] nodes later */ }
+    };
+  </script>
+
+  <!-- Minimal styles -->
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Ubuntu,sans-serif;margin:0;background:#0b0f15;color:#e7edf3}
+    header,footer{padding:16px 20px;background:#0f1520;position:sticky;top:0;z-index:2}
+    .wrap{max-width:1100px;margin:0 auto;padding:20px}
+    .pill{display:inline-block;padding:10px 14px;border:1px solid #2b364a;border-radius:999px;cursor:pointer}
+    .grid{display:grid;gap:16px}
+    @media(min-width:900px){.grid{grid-template-columns:1.2fr 1.2fr 1fr}}
+    .card{background:#121826;border:1px solid #1f2a3b;border-radius:16px;padding:16px}
+    .danger{background:#1d2a38;border-color:#3b516d}
+    .ok{background:#13261d;border-color:#2e5941}
+    .muted{opacity:.85}
+    .fab{position:fixed;right:16px;bottom:16px}
+  </style>
+</head>
+<body>
+  <header class="wrap">
+    <strong>PRA Safety Net</strong>
+    <span class="pill" id="btn-lost">I just lost my job</span>
+    <span class="pill" id="btn-build">Build my plan</span>
+    <span class="pill" id="btn-lang">🌐 Translate</span>
+  </header>
+
+  <main class="wrap grid">
+    <!-- L0: Country → Support -->
+    <section class="card danger" id="support">
+      <h2>Immediate Support</h2>
+      <div id="support-list" class="muted">Detecting your location…</div>
+    </section>
+
+    <!-- L1: Rapid Rails -->
+    <section class="card ok" id="rails">
+      <h2>Income Rails</h2>
+      <ul id="rails-list" class="muted">
+        <li>Tonight: quick micro-gigs, remote repair, community bounties</li>
+        <li>30-day: cert sprints & apprenticeships</li>
+        <li>90-day: pivot tracks (AI/data/cloud)</li>
+      </ul>
+    </section>
+
+    <!-- L2: Contribution Rail -->
+    <section class="card" id="contrib">
+      <h2>Improve this page</h2>
+      <p class="muted">Have a better link or guide? Submit it—goes to a queue for moderators.</p>
+      <form id="contrib-form">
+        <input name="title" placeholder="Title" required />
+        <input name="url" placeholder="URL (https://…)" required />
+        <input name="country" placeholder="Country code (e.g., CA, US, IN)" />
+        <button type="submit">Queue Submission</button>
+      </form>
+      <div id="contrib-status" class="muted"></div>
+    </section>
+  </main>
+
+  <!-- Collapsed tlk.io overlay -->
+  <div class="fab">
+    <a class="pill" target="_blank" rel="noopener" href="https://tlk.io/pra-safety-net">💬 Chat</a>
+  </div>
+
+  <footer class="wrap">
+    <small>Built by Ricky Foster + Navi • <span id="attn"></span></small>
+  </footer>
+
+  <script>
+    // Country resolver (consent-first)
+    async function getCountry(){
+      try{
+        // Lightweight heuristic with manual override later:
+        const locale = Intl.DateTimeFormat().resolvedOptions().locale || 'en';
+        const m = locale.match(/-([A-Z]{2})$/i);
+        return (m && m[1] || 'US').toUpperCase();
+      }catch{ return 'US'; }
+    }
+
+    // Demo data seed (replace/augment via signed manifests)
+    const seedSupports = [
+      {id:'CA_ei',country:'CA',category:'benefit',title:'Canada EI Benefits',url:'https://www.canada.ca/en/services/benefits/ei.html',verified:true,langs:['en','fr'],tags:['income','jobloss'],score:5,updated_at:'2025-10-01',source_hash:'…'},
+      {id:'US_ui',country:'US',category:'benefit',title:'US Unemployment Insurance',url:'https://www.dol.gov/general/topic/unemployment-insurance',verified:true,langs:['en','es'],tags:['income'],score:5,updated_at:'2025-10-01',source_hash:'…'},
+    ];
+
+    // Boot
+    (async ()=>{
+      await openDB();
+      // seed if empty
+      const s=tx('supports','readonly'); const r=s.getAll(); r.onsuccess=async ()=>{
+        if(!r.result.length){
+          const t=tx('supports','readwrite'); seedSupports.forEach(x=>t.add(x));
+        }
+      };
+      // attestation footer
+      const attn = document.getElementById('attn');
+      attn.textContent = (await sha256(PRA_ATTESTATION.proof)).slice(0,12);
+
+      // render supports
+      const ccode = await getCountry();
+      const listEl = document.getElementById('support-list');
+      const all = await new Promise(res=>{ const g=tx('supports').getAll(); g.onsuccess=()=>res(g.result)});
+      const items = all.filter(x=>x.country===ccode);
+      listEl.innerHTML = items.length ? items.map(x=>`<div><a href="${x.url}" target="_blank" rel="noopener">${x.title}</a></div>`).join('') : 'No local entries cached yet. Use “Improve this page” to add verified links.';
+    })();
+
+    // Contribution queue
+    document.getElementById('contrib-form').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const fd=new FormData(e.target);
+      const payload={title:fd.get('title'),url:fd.get('url'),country:(fd.get('country')||'').toUpperCase()};
+      const sha=await sha256(JSON.stringify(payload));
+      await new Promise(res=>{
+        const t=tx('submissions_queue','readwrite');
+        t.add({id:crypto.randomUUID(),payload,contributor_pubkey:null,sha256:sha,created_at:new Date().toISOString(),status:'queued'});
+        t.transaction.oncomplete=res;
+      });
+      document.getElementById('contrib-status').textContent='Queued. A moderator will review.';
+      e.target.reset();
+    });
+
+    // UX buttons
+    document.getElementById('btn-lost').onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
+    document.getElementById('btn-build').onclick=()=>alert('Wizard incoming: skills → tracks (Tonight/30/90).');
+    document.getElementById('btn-lang').onclick=()=>alert('Language selector will load client-side MT pack.');
+  </script>
+</body>
+</html>

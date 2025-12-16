@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Mycelial Strategy Bank — Core</title>
+  <meta name="description" content="Offline-first strategy bank using IndexedDB. Promote proven plans to Master and Grandmaster with evidence-backed replication." />
+  <style>
+    :root {
+      --bg: #0c0f12;
+      --card: #12161b;
+      --ink: #e9eef5;
+      --muted: #a9b2be;
+      --brand: #5ee1a0;
+      --accent: #7aa7ff;
+      --warn: #ffd166;
+      --danger: #ff6b6b;
+      --ok: #7ae582;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin:0; padding:0; background:var(--bg); color:var(--ink); font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    header {
+      position: sticky; top:0; z-index:5;
+      background: linear-gradient(180deg, rgba(10,12,16,0.9), rgba(10,12,16,0.6));
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid #1b2129;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 18px 16px; }
+    h1 { margin: 0; font-weight: 750; letter-spacing: 0.3px; }
+    .sub { color: var(--muted); margin-top: 6px; }
+    .grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; }
+    @media (max-width: 980px){ .grid { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--card); border: 1px solid #1b2129; border-radius: var(--radius);
+      padding: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    .card h2, .card h3 { margin-top: 6px; }
+    .muted { color: var(--muted); font-size: 0.95rem; }
+    label { display:block; font-weight: 600; margin: 10px 0 6px; }
+    input, textarea, select {
+      width: 100%; padding: 10px 12px; border-radius: 12px;
+      border: 1px solid #2a323d; background: #0f1318; color: var(--ink);
+      font: inherit;
+    }
+    textarea { min-height: 92px; }
+    .row { display:flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .btn {
+      display:inline-flex; align-items:center; gap:8px; padding:10px 14px;
+      border:1px solid #25303a; background:#0f151b; color:var(--ink);
+      border-radius: 12px; cursor: pointer; user-select:none;
+    }
+    .btn:hover { background:#121a22; }
+    .btn.brand { border-color: #1b3d31; background: #0b1411; color: #dcffef; }
+    .btn.brand:hover { background:#0e1a16; }
+    .btn.warn { border-color: #3b341f; background:#17140b; color:#fff0c9; }
+    .btn.danger { border-color: #3b1f1f; background:#170b0b; color:#ffe0e0; }
+    .pill { padding: 2px 8px; border-radius: 999px; border:1px solid #2a323d; color: var(--muted); font-size: 12px; }
+    .tag { background:#0a1116; border:1px solid #24323f; padding: 4px 8px; border-radius:10px; color:#9fb6cc; }
+    .list { display:grid; gap:10px; }
+    .plan { padding:12px; border-radius:14px; border:1px solid #24303b; background:#0d1318; }
+    .plan h4 { margin: 0 0 4px; }
+    .status { font-size: 12px; letter-spacing: 0.2px; padding:2px 8px; border-radius: 999px; border:1px solid #27303a; }
+    .s-seed { color:#b9d7ff; }
+    .s-sprout { color:#c3ffd1; }
+    .s-root { color:#ffe9b0; }
+    .s-master { color:#9ee8ff; }
+    .s-grand { color:#ffe0f2; }
+    footer { margin-top: 28px; padding: 18px 0 36px; color: var(--muted); }
+    .float-chat {
+      position: fixed; bottom: 18px; right: 18px; z-index: 20;
+      display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+    }
+    .chat-box {
+      display:none; width: min(420px, 94vw); height: 62vh; border:1px solid #1b2129; border-radius: 14px; overflow: hidden;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+    }
+    .fingerprint { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; word-break: break-all; font-size: 12px; color: #93a4b6; }
+    .divider { height:1px; background:#1b2129; margin: 12px 0; }
+  </style>
+</head>
+<body>
+  <!-- [Top Bar / Identity & Hash] -->
+  <header>
+    <div class="wrap">
+      <h1>Mycelial Strategy Bank <span class="pill">Core</span></h1>
+      <div class="sub">Seed → Sprout → Root → <strong>Master</strong> → <strong>Grandmaster</strong>. Evidence decides.</div>
+    </div>
+  </header>
+
+  <main class="wrap" id="app">
+    <div class="grid">
+      <!-- [Left: Create / Filter / Merge] -->
+      <section class="card">
+        <h2>Plan Creator</h2>
+        <p class="muted">Begin with a heartbeat (a true, small story). Add actions, tags, and proof pathways. Replication + success lifts plans up the lattice.</p>
+
+        <div class="row">
+          <button class="btn" id="btn-new-identity" title="Regenerate local mnemonic (kept only on this device)">New Identity</button>
+          <span class="pill" id="identity-pill">identity: …</span>
+        </div>
+
+        <label>Title</label>
+        <input id="f-title" placeholder="e.g., ‘Neighborhood Fruit Corridor (Siberian Apples)’" />
+
+        <label>Heartbeat (short story)</label>
+        <textarea id="f-heartbeat" placeholder="A moment of struggle, loss, or awe anyone could recognize…"></textarea>
+
+        <label>Actions (bullet-like text)</label>
+        <textarea id="f-actions" placeholder="- Map 3 viable sites
+- Gather 5 volunteers
+- Plant 50 seedlings
+- Log survivorship at 30/60/120 days"></textarea>
+
+        <label>Proof Plan (what counts as evidence?)</label>
+        <textarea id="f-proof" placeholder="- Before/after photos
+- GPS pins
+- Survivorship spreadsheet
+- Donor receipts or attestation"></textarea>
+
+        <div class="row">
+          <div style="flex:1">
+            <label>Tags (comma separated)</label>
+            <input id="f-tags" placeholder="apples, corridor, volunteer, cold-climate" />
+          </div>
+          <div style="width: 180px">
+            <label>Status</label>
+            <select id="f-status">
+              <option value="seed">Seed</option>
+              <option value="sprout">Sprout</option>
+              <option value="root">Root</option>
+              <option value="master">Master</option>
+              <option value="grand">Grandmaster</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <button class="btn brand" id="btn-create">Add Plan</button>
+          <button class="btn" id="btn-export">Export Bank (.json)</button>
+          <button class="btn" id="btn-import">Import</button>
+          <input type="file" id="file-import" accept="application/json" style="display:none" />
+        </div>
+
+        <div class="divider"></div>
+        <h3>Evidence Logger (quick)</h3>
+        <div class="row">
+          <input id="evid-plan-id" placeholder="Plan ID (paste or click a plan below)" />
+        </div>
+        <label>Link (optional)</label>
+        <input id="evid-link" placeholder="https://photo.example or sheet url" />
+        <label>Note</label>
+        <textarea id="evid-note" placeholder="What happened? numbers, dates, context…"></textarea>
+        <div class="row">
+          <button class="btn" id="btn-evid-success">Log Success</button>
+          <button class="btn warn" id="btn-evid-neutral">Log Neutral</button>
+          <button class="btn danger" id="btn-evid-fail">Log Fail</button>
+        </div>
+
+        <div class="divider"></div>
+        <h3>Merge Builder → Master</h3>
+        <p class="muted">Compose a Master plan from proven child plans. Select, then “Mint Master Draft.”</p>
+        <div class="row">
+          <input id="merge-title" placeholder="Master title (e.g., ‘Citywide Fruit Corridors v1’)" />
+          <button class="btn" id="btn-mint-master">Mint Master Draft</button>
+        </div>
+        <div id="merge-selected" class="muted" style="margin-top:6px">Selected children: <span id="merge-count">0</span></div>
+      </section>
+
+      <!-- [Right: Browser / Filters / List] -->
+      <section class="card">
+        <h2>Browse & Filter</h2>
+        <div class="row">
+          <input id="q" placeholder="Search title, tags, text…" />
+          <select id="q-status">
+            <option value="">Any status</option>
+            <option value="seed">Seed</option>
+            <option value="sprout">Sprout</option>
+            <option value="root">Root</option>
+            <option value="master">Master</option>
+            <option value="grand">Grandmaster</option>
+          </select>
+          <button class="btn" id="btn-refresh">Refresh</button>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <span class="pill">Replication threshold: <span id="thr-rep">5</span></span>
+          <span class="pill">Success ratio: <span id="thr-sr">0.8</span></span>
+          <button class="btn" id="btn-recalc-hash" title="Recalculate fingerprint over local bank">Rehash</button>
+        </div>
+
+        <div class="divider"></div>
+        <div class="list" id="list"></div>
+
+        <div class="divider"></div>
+        <div class="muted">
+          Bank fingerprint (SHA-256 over local content):<br />
+          <span class="fingerprint" id="fingerprint">…</span>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      <div class="muted">
+        Attribution: <strong>Ricky Foster + Navi</strong> — Planetary Restoration Archive.
+        This page stores everything locally via IndexedDB. Export regularly to share.
+        <br/>“If this moved you, let it move through you.” — PRA
+      </div>
+    </footer>
+  </main>
+
+  <!-- [TLK.io overlay] -->
+  <div class="float-chat">
+    <div class="chat-box" id="chat-box">
+      <iframe src="https://tlk.io/planetary-restoration-archive" title="PRA Chat"
+              style="width:100%;height:100%;border:0;background:#0b0f13"></iframe>
+    </div>
+    <button class="btn" id="btn-toggle-chat" title="Toggle chat overlay">Chat</button>
+  </div>
+
+  <!-- [Scripts] -->
+  <script>
+  /* ==========================================================
+     IndexedDB + Identity + Strategy Bank Core
+     ========================================================== */
+
+  const DB_NAME = 'PRA_StrategyBank';
+  const DB_VER  = 1;
+
+  const STORES = {
+    plans:     'plans',      // {id, title, heartbeat, actions, proof, tags[], status, author, createdAt, updatedAt, metrics}
+    evidence:  'evidence',   // {id, planId, kind: 'success'|'neutral'|'fail', link, note, at}
+    merges:    'merges',     // {id, title, childIds[], assembled, createdAt}
+    profiles:  'profiles',   // {id: 'me', mnemonic, pubId}
+    votes:     'votes'       // reserved for later use (not needed now)
+  };
+
+  const STATUS_LABEL = {
+    seed: 'Seed', sprout: 'Sprout', root: 'Root', master: 'Master', grand: 'Grandmaster'
+  };
+
+  // ---- helpers
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+  const nowISO = () => new Date().toISOString();
+
+  // ---- open DB
+  function openDB(){
+    return new Promise((resolve, reject) => {
+      const r = indexedDB.open(DB_NAME, DB_VER);
+      r.onupgradeneeded = (e) => {
+        const db = r.result;
+        if(!db.objectStoreNames.contains(STORES.plans)){
+          const s = db.createObjectStore(STORES.plans, { keyPath: 'id' });
+          s.createIndex('by_status', 'status', { unique: false });
+          s.createIndex('by_updated', 'updatedAt', { unique: false });
+        }
+        if(!db.objectStoreNames.contains(STORES.evidence)){
+          const s = db.createObjectStore(STORES.evidence, { keyPath: 'id' });
+          s.createIndex('by_plan', 'planId', { unique: false });
+        }
+        if(!db.objectStoreNames.contains(STORES.merges)){
+          db.createObjectStore(STORES.merges, { keyPath: 'id' });
+        }
+        if(!db.objectStoreNames.contains(STORES.profiles)){
+          db.createObjectStore(STORES.profiles, { keyPath: 'id' });
+        }
+        if(!db.objectStoreNames.contains(STORES.votes)){
+          db.createObjectStore(STORES.votes, { keyPath: 'id' });
+        }
+      };
+      r.onsuccess = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+    });
+  }
+
+  // ---- mnemonic (simple 12-word)
+  const WORDS = `acorn anchor amber arch bark beam bloom brook cedar cell clay cloud comet coral creek crystal dawn delta drift ember field flame flora forge frost fume gale glade glow grain grove harbor hatch haze hearth hollow ivy jet keen kettle kin kite Lumen marl mead mesa mist moss mote myco nimbus oak oasis opal orbit organ pearl pebble perch pine plume pollen prism pulse quartz quill radix reed reef ridge ripple river root sage seam seed shoal silta silt sinew slate sol soil spark spool sprig spume stalk star stem stone strand surge swale swell tessel thale thaw thrum tide tiller trill trunk vale vapor vein verge vine vista wake wane warp weald weave well wick wisp yew zeta`.split(/\s+/);
+
+  function randInt(n){ return crypto.getRandomValues(new Uint32Array(1))[0] % n; }
+
+  function makeMnemonic(n=12){
+    const arr = [];
+    for(let i=0;i<n;i++) arr.push(WORDS[randInt(WORDS.length)]);
+    return arr.join(' ');
+  }
+
+  async function sha256Hex(str){
+    const enc = new TextEncoder();
+    const buf = await crypto.subtle.digest('SHA-256', enc.encode(str));
+    const view = new Uint8Array(buf);
+    return Array.from(view).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+
+  // ---- storage ops
+  async function dbGet(store, key){
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(store, 'readonly');
+      const os = tx.objectStore(store);
+      const r = os.get(key);
+      r.onsuccess = () => resolve(r.result || null);
+      r.onerror = () => reject(r.error);
+    });
+  }
+
+  async function dbPut(store, value){
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(store, 'readwrite');
+      const os = tx.objectStore(store);
+      const r = os.put(value);
+      r.onsuccess = () => resolve(value);
+      r.onerror = () => reject(r.error);
+    });
+  }
+
+  async function dbAll(store){
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(store, 'readonly');
+      const os = tx.objectStore(store);
+      const req = os.getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  // ---- identity
+  async function ensureIdentity(){
+    let me = await dbGet(STORES.profiles, 'me');
+    if(!me){
+      const mnemonic = makeMnemonic(12);
+      const pubId = await sha256Hex(mnemonic).then(h => h.slice(0,16));
+      me = { id: 'me', mnemonic, pubId };
+      await dbPut(STORES.profiles, me);
+    }
+    $('#identity-pill').textContent = `identity: ${me.pubId}`;
+    return me;
+  }
+
+  // ---- create plan
+  function uid(prefix='p'){
+    const b = crypto.getRandomValues(new Uint8Array(8));
+    return prefix + Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join('');
+  }
+
+  function parseTags(s){
+    return (s || '').split(',').map(x=>x.trim()).filter(Boolean).slice(0,12);
+  }
+
+  async function addPlan(){
+    const me = await ensureIdentity();
+    const plan = {
+      id: uid('plan_'),
+      title: $('#f-title').value.trim(),
+      heartbeat: $('#f-heartbeat').value.trim(),
+      actions: $('#f-actions').value.trim(),
+      proof: $('#f-proof').value.trim(),
+      tags: parseTags($('#f-tags').value),
+      status: $('#f-status').value || 'seed',
+      author: me.pubId,
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+      metrics: { replications: 0, success: 0, neutral: 0, fail: 0 }
+    };
+    if(!plan.title){ alert('Title required'); return; }
+    await dbPut(STORES.plans, plan);
+    clearPlanForm();
+    await refreshList();
+  }
+
+  function clearPlanForm(){
+    $('#f-title').value = '';
+    $('#f-heartbeat').value = '';
+    $('#f-actions').value = '';
+    $('#f-proof').value = '';
+    $('#f-tags').value = '';
+    $('#f-status').value = 'seed';
+  }
+
+  // ---- evidence
+  async function addEvidence(kind){
+    const planId = $('#evid-plan-id').value.trim();
+    if(!planId){ alert('Provide a Plan ID'); return; }
+    const plan = (await dbAll(STORES.plans)).find(p=>p.id===planId);
+    if(!plan){ alert('Unknown Plan ID'); return; }
+
+    const ev = {
+      id: uid('evid_'),
+      planId,
+      kind,                     // success | neutral | fail
+      link: $('#evid-link').value.trim() || null,
+      note: $('#evid-note').value.trim() || null,
+      at: nowISO()
+    };
+    await dbPut(STORES.evidence, ev);
+
+    // update metrics
+    plan.metrics[ kind ] = (plan.metrics[kind] || 0) + 1;
+
+    // A “replication” is any success or fail (neutral doesn’t count)
+    if(kind === 'success' || kind === 'fail'){
+      plan.metrics.replications = (plan.metrics.replications || 0) + 1;
+    }
+    plan.updatedAt = nowISO();
+
+    // auto-promotion checks
+    const rep = plan.metrics.replications || 0;
+    const succ = plan.metrics.success || 0;
+    const sr = rep ? (succ/rep) : 0;
+    const thrRep = 5, thrSR = 0.8;
+
+    if(plan.status === 'seed' && rep >= 2 && sr >= 0.6) plan.status = 'sprout';
+    else if(plan.status === 'sprout' && rep >= 3 && sr >= 0.7) plan.status = 'root';
+    else if(plan.status === 'root' && rep >= thrRep && sr >= thrSR) plan.status = 'master';
+
+    await dbPut(STORES.plans, plan);
+    $('#evid-link').value = ''; $('#evid-note').value = '';
+    await refreshList();
+  }
+
+  // ---- search & list
+  function matchesQuery(p, q){
+    if(!q) return true;
+    q = q.toLowerCase();
+    const hay = [p.title, p.heartbeat, p.actions, p.proof, (p.tags||[]).join(' ')].join('\n').toLowerCase();
+    return hay.includes(q);
+  }
+
+  let mergeSelection = new Set();
+
+  async function refreshList(){
+    const q = $('#q').value.trim().toLowerCase();
+    const stat = $('#q-status').value;
+    const plans = (await dbAll(STORES.plans))
+      .filter(p => matchesQuery(p, q))
+      .filter(p => !stat || p.status === stat)
+      .sort((a,b) => (b.updatedAt||'').localeCompare(a.updatedAt||''));
+
+    const root = $('#list');
+    root.innerHTML = '';
+    for(const p of plans){
+      const rep = p.metrics?.replications||0;
+      const succ = p.metrics?.success||0;
+      const fail = p.metrics?.fail||0;
+      const sr = rep ? (succ/rep) : 0;
+
+      const div = document.createElement('div');
+      div.className = 'plan';
+      div.innerHTML = `
+        <div class="row" style="justify-content:space-between">
+          <h4>${escapeHTML(p.title)}</h4>
+          <span class="status ${statusClass(p.status)}">${STATUS_LABEL[p.status]||p.status}</span>
+        </div>
+        <div class="muted" style="margin-bottom:8px">ID: <code>${p.id}</code> • by <code>${p.author}</code> • updated ${new Date(p.updatedAt).toLocaleString()}</div>
+        <div style="display:grid; gap:6px">
+          <div><strong>Heartbeat:</strong> ${escapeHTML(p.heartbeat)}</div>
+          <div><strong>Actions:</strong><br><pre style="white-space:pre-wrap;margin:0">${escapeHTML(p.actions)}</pre></div>
+          <div><strong>Proof plan:</strong> ${escapeHTML(p.proof)}</div>
+          <div class="row" style="gap:8px">${(p.tags||[]).map(t=>`<span class="tag">#${escapeHTML(t)}</span>`).join('')}</div>
+          <div class="row" style="gap:12px; margin-top:8px">
+            <span class="pill">replications: ${rep}</span>
+            <span class="pill">success: ${succ}</span>
+            <span class="pill">fail: ${fail}</span>
+            <span class="pill">success ratio: ${(rep? (sr*100).toFixed(0):'0')}%</span>
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" data-act="copy-id" data-id="${p.id}">Copy ID</button>
+          <button class="btn" data-act="select-merge" data-id="${p.id}">${mergeSelection.has(p.id)?'Deselect':'Select'}</button>
+          ${p.status!=='grand' ? `<button class="btn brand" data-act="promote" data-id="${p.id}">Promote</button>`:''}
+        </div>
+      `;
+      div.addEventListener('click', (ev)=>{
+        const btn = ev.target.closest('button');
+        if(!btn) return;
+        const id = btn.getAttribute('data-id');
+        const act = btn.getAttribute('data-act');
+        if(act === 'copy-id'){
+          navigator.clipboard.writeText(id);
+          $('#evid-plan-id').value = id;
+        } else if(act === 'select-merge'){
+          if(mergeSelection.has(id)) mergeSelection.delete(id); else mergeSelection.add(id);
+          $('#merge-count').textContent = mergeSelection.size;
+          btn.textContent = mergeSelection.has(id) ? 'Deselect' : 'Select';
+        } else if(act === 'promote'){
+          manualPromote(id);
+        }
+      }, { passive:true });
+      root.appendChild(div);
+    }
+
+    // update fingerprint
+    await recalcFingerprint();
+  }
+
+  function statusClass(s){
+    return s==='seed'?'s-seed': s==='sprout'?'s-sprout': s==='root'?'s-root': s==='master'?'s-master':'s-grand';
+  }
+
+  async function manualPromote(id){
+    const plans = await dbAll(STORES.plans);
+    const p = plans.find(x=>x.id===id);
+    if(!p) return;
+    if(p.status==='seed') p.status='sprout';
+    else if(p.status==='sprout') p.status='root';
+    else if(p.status==='root') p.status='master';
+    else if(p.status==='master') p.status='grand';
+    p.updatedAt = nowISO();
+    await dbPut(STORES.plans, p);
+    await refreshList();
+  }
+
+  // ---- merge → master draft
+  async function mintMasterDraft(){
+    const title = $('#merge-title').value.trim();
+    if(!title){ alert('Title required for Master draft'); return; }
+    if(mergeSelection.size < 1){ alert('Select at least one child plan'); return; }
+    const children = Array.from(mergeSelection);
+    const childRecords = (await dbAll(STORES.plans)).filter(p=>children.includes(p.id));
+
+    const assembled = {
+      summary: `Synthesized from ${children.length} proven plans.`,
+      rationale: `Selected for high replication and success ratio where applicable.`,
+      synthesis: childRecords.map(p => ({
+        id: p.id, title: p.title,
+        distilled_actions: p.actions,
+        learned: `SR≈${ratioStr(p)}; reps=${p.metrics.replications||0}`
+      }))
+    };
+    const m = { id: uid('merge_'), title, childIds: children, assembled, createdAt: nowISO() };
+    await dbPut(STORES.merges, m);
+
+    // Also create an actual Master plan stub linking to this merge
+    const master = {
+      id: uid('plan_'),
+      title: title + ' (Master Draft)',
+      heartbeat: 'Draft assembled from proven child plans.',
+      actions: assembled.synthesis.map(s=>`From ${s.title}\n${s.distilled_actions}`).join('\n\n'),
+      proof: 'Collect meta-evidence showing composite replication from child nodes.',
+      tags: ['master','merge'],
+      status: 'master',
+      author: (await ensureIdentity()).pubId,
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+      metrics: { replications: 0, success: 0, neutral: 0, fail: 0 },
+      mergeRef: m.id
+    };
+    await dbPut(STORES.plans, master);
+    mergeSelection.clear();
+    $('#merge-count').textContent = '0';
+    $('#merge-title').value = '';
+    await refreshList();
+  }
+
+  function ratioStr(p){
+    const rep = p.metrics?.replications||0;
+    const succ = p.metrics?.success||0;
+    return rep ? (succ/rep).toFixed(2) : '0.00';
+  }
+
+  // ---- export/import/share
+  async function exportBank(){
+    const payload = {
+      version: 1,
+      exportedAt: nowISO(),
+      plans: await dbAll(STORES.plans),
+      evidence: await dbAll(STORES.evidence),
+      merges: await dbAll(STORES.merges),
+      profile: await dbGet(STORES.profiles, 'me')
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `pra_strategy_bank_${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  async function importBankFromObject(obj){
+    if(!obj || typeof obj !== 'object') throw new Error('Invalid import payload');
+    for(const p of (obj.plans||[])) await dbPut(STORES.plans, p);
+    for(const e of (obj.evidence||[])) await dbPut(STORES.evidence, e);
+    for(const m of (obj.merges||[])) await dbPut(STORES.merges, m);
+    if(obj.profile) await dbPut(STORES.profiles, obj.profile);
+    await refreshList();
+  }
+
+  function importFromFile(){
+    $('#file-import').click();
+  }
+  $('#file-import')?.addEventListener('change', async (e)=>{
+    const f = e.target.files?.[0];
+    if(!f) return;
+    const txt = await f.text();
+    try { await importBankFromObject(JSON.parse(txt)); }
+    catch(err){ alert('Import failed: ' + err.message); }
+    finally { e.target.value = ''; }
+  });
+
+  // ---- fingerprint
+  async function recalcFingerprint(){
+    const payload = {
+      plans: await dbAll(STORES.plans),
+      evidence: await dbAll(STORES.evidence),
+      merges: await dbAll(STORES.merges)
+    };
+    // Normalize sort for stable hash
+    payload.plans.sort((a,b)=>a.id.localeCompare(b.id));
+    payload.evidence.sort((a,b)=>a.id.localeCompare(b.id));
+    payload.merges.sort((a,b)=>a.id.localeCompare(b.id));
+
+    const fp = await sha256Hex(JSON.stringify(payload));
+    $('#fingerprint').textContent = fp;
+    return fp;
+  }
+
+  // ---- utilities
+  function escapeHTML(s){
+    return (s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;' }[c]));
+  }
+
+  // ---- chat toggle
+  $('#btn-toggle-chat').addEventListener('click', ()=>{
+    const box = $('#chat-box');
+    box.style.display = (box.style.display==='block') ? 'none' : 'block';
+  });
+
+  // ---- UI wire
+  window.addEventListener('DOMContentLoaded', async ()=>{
+    await ensureIdentity();
+    $('#btn-new-identity').addEventListener('click', async ()=>{
+      const mnemonic = makeMnemonic(12);
+      const pubId = (await sha256Hex(mnemonic)).slice(0,16);
+      await dbPut(STORES.profiles, { id:'me', mnemonic, pubId });
+      $('#identity-pill').textContent = `identity: ${pubId}`;
+    });
+
+    $('#btn-create').addEventListener('click', addPlan);
+    $('#btn-refresh').addEventListener('click', refreshList);
+    $('#btn-export').addEventListener('click', exportBank);
+    $('#btn-import').addEventListener('click', importFromFile);
+
+    $('#btn-evid-success').addEventListener('click', ()=>addEvidence('success'));
+    $('#btn-evid-neutral').addEventListener('click', ()=>addEvidence('neutral'));
+    $('#btn-evid-fail').addEventListener('click',    ()=>addEvidence('fail'));
+    $('#btn-mint-master').addEventListener('click', mintMasterDraft);
+    $('#btn-recalc-hash').addEventListener('click', recalcFingerprint);
+
+    $('#q').addEventListener('input', refreshList);
+    $('#q-status').addEventListener('change', refreshList);
+
+    await refreshList();
+  }, { once:true });
+  </script>
+
+  <!--
+    [Sections & Future Expansion Notes]
+    - [core/identity]: local mnemonic, pubId derivation
+    - [core/db]: IndexedDB stores (plans, evidence, merges, profiles)
+    - [core/lifecycle]: Seed→Sprout→Root→Master→Grandmaster thresholds
+    - [core/evidence]: quick logger (success/neutral/fail) + metrics
+    - [core/merge]: compose master draft from child plans
+    - [core/export]: JSON export/import + share-code (to be added in Part 2)
+    - [collab/chat]: TLK.io overlay (collapsed by default)
+    - [crypto/hash]: bank fingerprint via SHA-256 for tamper-evidence
+    - [ui]: responsive, no external libs, offline-first by nature (no SW yet)
+  -->
+</body>
+</html>

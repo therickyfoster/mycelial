@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- [meta/head] Grandmaster Board & Publisher for the Mycelial Strategy Bank -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>PRA — Grandmaster Board & Publisher</title>
+  <meta name="description" content="Surface Master/Grandmaster plans, verify signed share codes, and export a static publication bundle for PRA." />
+  <style>
+    :root{
+      --bg:#0b0f13; --card:#10161d; --ink:#eaf3ff; --muted:#9fb0c2;
+      --brand:#67f0b2; --accent:#8bb0ff; --warn:#ffd166; --danger:#ff6b6b; --ok:#7ae582; --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+    header{position:sticky;top:0;z-index:8;background:linear-gradient(180deg,rgba(8,11,16,.9),rgba(8,11,16,.6));backdrop-filter:blur(6px);border-bottom:1px solid #1b2230}
+    .wrap{max-width:1240px;margin:0 auto;padding:18px 16px}
+    h1{margin:0;font-weight:800;letter-spacing:.2px}
+    .sub{color:var(--muted);margin-top:6px}
+    .grid{display:grid;grid-template-columns:1.15fr 1fr;gap:16px}
+    @media (max-width:980px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--card);border:1px solid #1b2230;border-radius:var(--radius);padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .muted{color:var(--muted)}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .pill{padding:2px 8px;border-radius:999px;border:1px solid #26313b;color:var(--muted);font-size:12px}
+    label{display:block;font-weight:650;margin:10px 0 6px}
+    input,textarea,select{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #24313c;background:#0d1318;color:var(--ink);font:inherit}
+    textarea{min-height:90px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid #273340;background:#0c1217;color:var(--ink);border-radius:12px;cursor:pointer}
+    .btn:hover{background:#101821}
+    .btn.brand{border-color:#1b3d31;background:#0b1411;color:#dcffef}
+    .btn.warn{border-color:#3b341f;background:#17140b;color:#fff0c9}
+    .btn.danger{border-color:#3b1f1f;background:#170b0b;color:#ffe0e0}
+    .btn.ghost{background:transparent}
+    .divider{height:1px;background:#1b2230;margin:12px 0}
+    .list{display:grid;gap:10px}
+    .item{padding:12px;border-radius:14px;border:1px solid #21303c;background:#0e1419}
+    .item h4{margin:0 0 4px}
+    .badge{font-size:11px;border:1px solid #2a3541;border-radius:999px;padding:2px 6px;color:#9ab6cf}
+    .fingerprint{font-family:ui-monospace,Menlo,Consolas,monospace;word-break:break-all;font-size:12px;color:#93a4b6}
+    .tag{background:#0a1218;border:1px solid #24323f;padding:4px 8px;border-radius:10px;color:#9fb6cc}
+    table{width:100%;border-collapse:collapse;font-size:.95rem}
+    th,td{padding:8px;border-bottom:1px solid #1b2230;text-align:left}
+    th{color:#bcd0e6;font-weight:700}
+    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:#0e151b;border:1px solid #25313c;color:#eaf3ff;padding:10px 14px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:50;display:none}
+    footer{margin-top:28px;padding:18px 0 36px;color:var(--muted)}
+    .float-chat{position:fixed;bottom:18px;right:18px;z-index:20;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+    .chat-box{display:none;width:min(420px,94vw);height:62vh;border:1px solid #1b2129;border-radius:14px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+    .hint{font-size:12px;color:#9fb0c2}
+    .good{color:var(--ok)} .mid{color:var(--warn)} .bad{color:var(--danger)}
+    code{background:#0a1016;border:1px solid #1b2330;padding:2px 6px;border-radius:8px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Grandmaster Board <span class="pill">PRA Publisher</span></h1>
+      <div class="sub">Showcase Master/Grandmaster plans • Verify signed share codes • Export static bundles.</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <!-- LEFT: Board -->
+      <section class="card">
+        <h2>Board</h2>
+        <div class="row">
+          <span class="pill" id="identity-pill">identity: …</span>
+          <button class="btn brand" id="btn-refresh">Refresh</button>
+          <span class="pill">Local FP: <span id="fp-local">—</span></span>
+        </div>
+
+        <div class="row" style="margin-top:6px">
+          <input id="q" placeholder="Search title/tags…" />
+          <select id="q-status">
+            <option value="">Master + Grandmaster</option>
+            <option value="master">Master only</option>
+            <option value="grand">Grandmaster only</option>
+          </select>
+          <select id="q-sort">
+            <option value="rep">Sort: Replications</option>
+            <option value="sr">Sort: Success%</option>
+            <option value="new">Sort: Newest</option>
+          </select>
+        </div>
+
+        <div class="divider"></div>
+        <div id="board" class="list"></div>
+      </section>
+
+      <!-- RIGHT: Verification & Publishing -->
+      <section class="card">
+        <h2>Ingest & Publish</h2>
+        <div class="item">
+          <h4>Verify Signed Share Code</h4>
+          <div class="hint">Paste a PRA share code (Part 2) and a curator signature (Part 4). Optionally include the curator public key (PEM) to verify immediately.</div>
+          <label>Share Code</label>
+          <textarea id="share-code" placeholder="Paste PRA share code…"></textarea>
+          <label>Signature (Base64url)</label>
+          <textarea id="share-sig" placeholder="Paste curator signature…"></textarea>
+          <label>Curator Public Key (PEM, optional)</label>
+          <textarea id="share-pub" placeholder="-----BEGIN PUBLIC KEY----- …"></textarea>
+          <div class="row" style="margin-top:6px">
+            <button class="btn" id="btn-verify">Verify</button>
+            <button class="btn brand" id="btn-import">Import If Valid</button>
+          </div>
+          <div class="hint">Result: <span id="verify-state" class="mid">—</span></div>
+        </div>
+
+        <div class="item" style="margin-top:10px">
+          <h4>Publisher Settings</h4>
+          <label>Site Title</label>
+          <input id="pub-title" placeholder="Planetary Restoration Archive — Grandmaster Board" />
+          <label>Attribution</label>
+          <input id="pub-attr" placeholder="Ricky Foster + Navi — PRA" />
+          <label>Call to Action (appears under each dossier)</label>
+          <input id="pub-cta" placeholder="If this moved you, let it move through you." />
+          <label>Donation Overlay (optional XMR address)</label>
+          <input id="pub-xmr" placeholder="Monero address or leave blank…" />
+        </div>
+
+        <div class="item" style="margin-top:10px">
+          <h4>Export Static Bundle</h4>
+          <div class="hint">Select plan IDs (comma-separated). We’ll generate: <code>index.public.html</code>, <code>sitemap.json</code>, and Markdown dossiers.</div>
+          <label>Plan IDs</label>
+          <input id="pub-ids" placeholder="plan_abc…, plan_def…" />
+          <div class="row" style="margin-top:6px">
+            <button class="btn brand" id="btn-export-html">Export HTML</button>
+            <button class="btn" id="btn-export-json">Export JSON</button>
+            <button class="btn" id="btn-export-md">Export MD Dossiers</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      <div class="muted">
+        Attribution: <strong>Ricky Foster + Navi</strong> — Planetary Restoration Archive. 
+        “If this moved you, let it move through you.” — PRA
+      </div>
+    </footer>
+  </main>
+
+  <!-- TLK overlay (collapsed) -->
+  <div class="float-chat">
+    <div class="chat-box" id="chat-box">
+      <iframe src="https://tlk.io/planetary-restoration-archive" title="PRA Chat"
+              style="width:100%;height:100%;border:0;background:#0b0f13"></iframe>
+    </div>
+    <button class="btn" id="btn-toggle-chat" title="Toggle chat overlay">Chat</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+  /* ==========================================================
+     Shared DB + utils
+     ========================================================== */
+  const DB='PRA_StrategyBank', VER=1;
+  const STORES={plans:'plans',evidence:'evidence',merges:'merges',profiles:'profiles'};
+  const $=s=>document.querySelector(s);
+  const nowISO=()=>new Date().toISOString();
+
+  function openDB(){
+    return new Promise((resolve,reject)=>{
+      const r=indexedDB.open(DB,VER);
+      r.onupgradeneeded=()=>{const db=r.result;
+        if(!db.objectStoreNames.contains('plans')){const s=db.createObjectStore('plans',{keyPath:'id'});s.createIndex('by_status','status');s.createIndex('by_updated','updatedAt');}
+        if(!db.objectStoreNames.contains('evidence')){const s=db.createObjectStore('evidence',{keyPath:'id'});s.createIndex('by_plan','planId');}
+        if(!db.objectStoreNames.contains('merges')) db.createObjectStore('merges',{keyPath:'id'});
+        if(!db.objectStoreNames.contains('profiles')) db.createObjectStore('profiles',{keyPath:'id'});
+      };
+      r.onsuccess=()=>resolve(r.result); r.onerror=()=>reject(r.error);
+    });
+  }
+  async function dbAll(store){const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(store,'readonly');const os=tx.objectStore(store);const req=os.getAll();req.onsuccess=()=>res(req.result||[]);req.onerror=()=>rej(req.error);});}
+  async function dbPut(store,val){const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(store,'readwrite');const os=tx.objectStore(store);const req=os.put(val);req.onsuccess=()=>res(val);req.onerror=()=>rej(req.error);});}
+  async function dbGet(store,key){const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(store,'readonly');const os=tx.objectStore(store);const req=os.get(key);req.onsuccess=()=>res(req.result||null);req.onerror=()=>rej(req.error);});}
+  async function sha256Hex(str){const enc=new TextEncoder();const buf=await crypto.subtle.digest('SHA-256',enc.encode(str));return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');}
+  async function localFingerprint(){const payload={plans:await dbAll('plans'),evidence:await dbAll('evidence'),merges:await dbAll('merges')};payload.plans.sort((a,b)=>a.id.localeCompare(b.id));payload.evidence.sort((a,b)=>a.id.localeCompare(b.id));payload.merges.sort((a,b)=>a.id.localeCompare(b.id));return sha256Hex(JSON.stringify(payload));}
+  async function identity(){let me=await dbGet('profiles','me');if(!me){const mnemonic='local-anonymous-seed';const pubId=(await sha256Hex(mnemonic)).slice(0,16);me={id:'me',mnemonic,pubId};await dbPut('profiles',me);}$('#identity-pill').textContent=`identity: ${me.pubId}`;return me;}
+  function toast(msg,ms=2200){const t=$('#toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',ms);}
+
+  function escapeHTML(s){return (s||'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function ratio(p){const rep=p.metrics?.replications||0;const succ=p.metrics?.success||0;return rep?succ/rep:0;}
+  function matches(p,q){if(!q) return true; q=q.toLowerCase(); const hay=[p.title,p.heartbeat,p.actions,p.proof,(p.tags||[]).join(' ')].join('\n').toLowerCase(); return hay.includes(q);}
+
+  /* ==========================================================
+     Board render
+     ========================================================== */
+  async function renderBoard(){
+    $('#fp-local').textContent = await localFingerprint();
+    const plans=(await dbAll('plans')).filter(p=>p.status==='master'||p.status==='grand');
+    const q=$('#q').value.trim(); const status=$('#q-status').value; const sort=$('#q-sort').value;
+    let list=plans.filter(p=>matches(p,q)).filter(p=>!status||p.status===status);
+    if(sort==='rep'){ list.sort((a,b)=>(b.metrics?.replications||0)-(a.metrics?.replications||0)); }
+    else if(sort==='sr'){ list.sort((a,b)=>ratio(b)-ratio(a)); }
+    else { list.sort((a,b)=> (b.updatedAt||'').localeCompare(a.updatedAt||'')); }
+    const root=$('#board'); root.innerHTML='';
+    if(!list.length){ root.innerHTML='<div class="muted">No Master/Grandmaster plans yet. Promote some from Core or import verified shares.</div>'; return; }
+    for(const p of list){
+      const rep=p.metrics?.replications||0, succ=p.metrics?.success||0, fail=p.metrics?.fail||0, sr=rep?((succ/rep)*100).toFixed(0):'0';
+      const div=document.createElement('div'); div.className='item';
+      div.innerHTML=`
+        <div class="row" style="justify-content:space-between">
+          <h4>${escapeHTML(p.title)}</h4>
+          <span class="badge">${escapeHTML(p.status==='grand'?'Grandmaster':'Master')}</span>
+        </div>
+        <div class="muted">ID: <code>${p.id}</code> • by <code>${escapeHTML(p.author||'?')}</code> • updated ${escapeHTML(new Date(p.updatedAt||p.createdAt||Date.now()).toLocaleString())}</div>
+        <div style="margin-top:6px">${(p.tags||[]).map(t=>`<span class="tag">#${escapeHTML(t)}</span>`).join(' ')}</div>
+        <div class="row" style="gap:12px; margin-top:8px">
+          <span class="pill">replications: ${rep}</span>
+          <span class="pill">success: ${succ}</span>
+          <span class="pill">fail: ${fail}</span>
+          <span class="pill">success ratio: ${sr}%</span>
+        </div>
+      `;
+      root.appendChild(div);
+    }
+  }
+
+  /* ==========================================================
+     Verify & Import signed share codes (detached sig)
+     ========================================================== */
+  function b64uToBytes(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); const pad=s.length%4; if(pad) s+='='.repeat(4-pad); const bin=atob(s); const out=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i); return out; }
+  async function importPEMPublic(pem){
+    const base64=pem.replace(/-----[^-]+-----/g,'').replace(/\s+/g,''); const bin=Uint8Array.from(atob(base64),c=>c.charCodeAt(0)).buffer;
+    return crypto.subtle.importKey('spki', bin, {name:'ECDSA', namedCurve:'P-256'}, true, ['verify']);
+  }
+  function normStr(s){ return new TextEncoder().encode(s); }
+
+  function parseShare(code){
+    try{
+      const s=code.trim().replace(/-/g,'+').replace(/_/g,'/'); const pad=s.length%4; const fixed=pad? s+'='.repeat(4-pad):s;
+      const json=new TextDecoder().decode(Uint8Array.from(atob(fixed),c=>c.charCodeAt(0)));
+      const obj=JSON.parse(json);
+      if(obj?.kind!=='PRA_SHARE') throw new Error('Not a PRA share payload');
+      return obj;
+    }catch(e){ throw new Error('Invalid share code'); }
+  }
+
+  async function verifyShare(){
+    const code=$('#share-code').value.trim();
+    const sigB64u=$('#share-sig').value.trim();
+    const pem=$('#share-pub').value.trim();
+    if(!code||!sigB64u){ $('#verify-state').textContent='Missing code or signature'; $('#verify-state').className='bad'; return null; }
+    try{
+      const pub = pem ? await importPEMPublic(pem) : null;
+      if(!pub){ $('#verify-state').textContent='No public key provided (cannot verify)'; $('#verify-state').className='mid'; return { ok:false, payload: null }; }
+      const ok = await crypto.subtle.verify({name:'ECDSA', hash:'SHA-256'}, pub, b64uToBytes(sigB64u), normStr(code));
+      const payload = ok ? parseShare(code) : null;
+      $('#verify-state').textContent = ok ? 'Signature VALID' : 'Signature INVALID';
+      $('#verify-state').className = ok ? 'good' : 'bad';
+      return { ok, payload };
+    }catch(e){
+      $('#verify-state').textContent='Verification error'; $('#verify-state').className='bad';
+      return { ok:false, payload:null };
+    }
+  }
+
+  async function importIfValid(){
+    const res = await verifyShare(); if(!res || !res.ok){ toast('Not importing (invalid)'); return; }
+    // Upsert content (reuse Part 2 semantics)
+    const payload=res.payload;
+    for(const p of (payload.plans||[])){ p.updatedAt=nowISO(); await dbPut('plans', p); }
+    for(const ev of (payload.evidence||[])) await dbPut('evidence', ev);
+    for(const m of (payload.merges||[])) await dbPut('merges', m);
+    localStorage.setItem('pra_last_receipt', JSON.stringify(payload.receipt||{}));
+    toast('Imported verified share');
+    await renderBoard();
+  }
+
+  /* ==========================================================
+     Publisher — bundle generators
+     ========================================================== */
+  function mdDossier(p, cta, attr){
+    const rep=p.metrics?.replications||0, succ=p.metrics?.success||0, fail=p.metrics?.fail||0, sr=rep?((succ/rep)*100).toFixed(0):'0';
+    const tags=(p.tags||[]).map(t=>`#${t}`).join(' ');
+    return `# ${p.title}
+**Status:** ${p.status} • **ID:** \`${p.id}\` • **Author:** \`${p.author||'unknown'}\`  
+**Tags:** ${tags}
+
+## Heartbeat
+${p.heartbeat||''}
+
+## Distilled Actions
+\`\`\`
+${p.actions||''}
+\`\`\`
+
+## Proof Plan
+${p.proof||''}
+
+## Evidence Summary
+- Replications: **${rep}**
+- Success: **${sr}%** (succ: ${succ}, fail: ${fail})
+
+> ${cta}
+
+_${attr}_`;
+  }
+
+  async function exportHTML(){
+    const title=$('#pub-title').value.trim()||'Planetary Restoration Archive — Grandmaster Board';
+    const attr=$('#pub-attr').value.trim()||'Ricky Foster + Navi — PRA';
+    const cta=$('#pub-cta').value.trim()||'If this moved you, let it move through you.';
+    const xmr=$('#pub-xmr').value.trim();
+    const ids=$('#pub-ids').value.split(',').map(s=>s.trim()).filter(Boolean);
+    if(!ids.length){ toast('Add plan IDs'); return; }
+    const plans=(await dbAll('plans')).filter(p=>ids.includes(p.id));
+
+    const cards = plans.map(p=>`
+      <article class="card">
+        <h2>${escapeHTML(p.title)}</h2>
+        <div class="muted">Status: ${escapeHTML(p.status)} • ID: <code>${p.id}</code> • Author: <code>${escapeHTML(p.author||'?')}</code></div>
+        <div style="margin-top:6px">${(p.tags||[]).map(t=>`<span class="tag">#${escapeHTML(t)}</span>`).join(' ')}</div>
+        <h3>Heartbeat</h3>
+        <p>${escapeHTML(p.heartbeat||'')}</p>
+        <h3>Actions</h3>
+        <pre style="white-space:pre-wrap">${escapeHTML(p.actions||'')}</pre>
+        <h3>Proof Plan</h3>
+        <p>${escapeHTML(p.proof||'')}</p>
+        <div class="divider"></div>
+        <p><em>${escapeHTML(cta)}</em></p>
+        ${xmr? `<p class="muted">XMR: <code>${escapeHTML(xmr)}</code></p>`:''}
+      </article>
+    `).join('\n');
+
+    const html = `<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>${escapeHTML(title)}</title>
+<style>
+body{margin:0;background:#0b0f13;color:#eaf3ff;font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+.wrap{max-width:900px;margin:0 auto;padding:22px 16px}
+h1{margin:0 0 6px}
+.muted{color:#9fb0c2}
+.card{background:#10161d;border:1px solid #1b2230;border-radius:16px;padding:16px;margin:12px 0}
+.divider{height:1px;background:#1b2230;margin:12px 0}
+.tag{background:#0a1218;border:1px solid #24323f;padding:4px 8px;border-radius:10px;color:#9fb6cc;margin-right:6px}
+footer{margin-top:24px;padding:16px 0 36px;color:#9fb0c2}
+</style></head><body>
+<main class="wrap">
+  <header>
+    <h1>${escapeHTML(title)}</h1>
+    <div class="muted">Attribution: ${escapeHTML(attr)}</div>
+  </header>
+  ${cards}
+  <footer>“If this moved you, let it move through you.” — PRA</footer>
+</main>
+</body></html>`;
+
+    const blob=new Blob([html],{type:'text/html'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='index.public.html'; document.body.appendChild(a); a.click(); a.remove();
+    toast('Exported index.public.html');
+  }
+
+  async function exportJSON(){
+    const ids=$('#pub-ids').value.split(',').map(s=>s.trim()).filter(Boolean);
+    if(!ids.length){ toast('Add plan IDs'); return; }
+    const plans=(await dbAll('plans')).filter(p=>ids.includes(p.id));
+    const evidence=await dbAll('evidence');
+    const evMap={}; for(const e of evidence){ if(ids.includes(e.planId)){ (evMap[e.planId]=evMap[e.planId]||[]).push(e); } }
+    const sitemap={
+      v:1, generatedAt: nowISO(),
+      bankFingerprint: await localFingerprint(),
+      items: plans.map(p=>({
+        id:p.id, title:p.title, status:p.status, tags:p.tags||[],
+        metrics:p.metrics||{}, author:p.author||null, updatedAt:p.updatedAt||p.createdAt||null,
+        evidence:(evMap[p.id]||[]).map(e=>({id:e.id, kind:e.kind, link:e.link||null, at:e.at}))
+      }))
+    };
+    const blob=new Blob([JSON.stringify(sitemap,null,2)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='sitemap.json'; document.body.appendChild(a); a.click(); a.remove();
+    toast('Exported sitemap.json');
+  }
+
+  async function exportMD(){
+    const cta=$('#pub-cta').value.trim()||'If this moved you, let it move through you.';
+    const attr=$('#pub-attr').value.trim()||'Ricky Foster + Navi — PRA';
+    const ids=$('#pub-ids').value.split(',').map(s=>s.trim()).filter(Boolean);
+    if(!ids.length){ toast('Add plan IDs'); return; }
+    const plans=(await dbAll('plans')).filter(p=>ids.includes(p.id));
+    for(const p of plans){
+      const md=mdDossier(p, cta, attr);
+      const blob=new Blob([md],{type:'text/markdown'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`dossier_${p.id}.md`; document.body.appendChild(a); a.click(); a.remove();
+    }
+    toast(`Exported ${plans.length} dossiers`);
+  }
+
+  /* ==========================================================
+     Wire
+     ========================================================== */
+  async function init(){ await identity(); await renderBoard(); }
+  $('#btn-refresh').addEventListener('click', renderBoard);
+  $('#q').addEventListener('input', renderBoard);
+  $('#q-status').addEventListener('change', renderBoard);
+  $('#q-sort').addEventListener('change', renderBoard);
+
+  $('#btn-verify').addEventListener('click', verifyShare);
+  $('#btn-import').addEventListener('click', importIfValid);
+
+  $('#btn-export-html').addEventListener('click', exportHTML);
+  $('#btn-export-json').addEventListener('click', exportJSON);
+  $('#btn-export-md').addEventListener('click', exportMD);
+
+  $('#btn-toggle-chat').addEventListener('click', ()=>{ const box=$('#chat-box'); box.style.display=(box.style.display==='block')?'none':'block'; });
+
+  window.addEventListener('DOMContentLoaded', init, {once:true});
+  </script>
+
+  <!--
+    [Sections & Future Expansion Notes]
+    - [board/filter]: quick filters and sorts for Master/Grandmaster
+    - [ingest/verify]: detached ECDSA signatures (P-256) for share codes
+    - [publish/html]: single-file static publisher
+    - [publish/json]: sitemap for headless consumers
+    - [publish/md]: per-plan dossiers (Markdown)
+    - [idea]: optional RSS/Atom feed, or web components to embed live counters
+  -->
+</body>
+</html>

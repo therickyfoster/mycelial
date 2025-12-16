@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- ======= SEO / META ======= -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mycelial Strategy Bank — Planetary Restoration</title>
+  <meta name="description" content="A region-agnostic, mycelial strategy bank to untangle corrupt bounty networks and amplify planetary restoration—complete with guardrails, IndexedDB persistence, Habitica integration, and WebLLM prompt-chain blueprints." />
+  <meta name="keywords" content="planetary restoration, integrity, bounty networks, anti-corruption, governance, prompt engineering, WebLLM, Habitica, IndexedDB, blueprint bank, mycelial" />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://planetaryrestorationarchive.com/" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Mycelial Strategy Bank — Planetary Restoration" />
+  <meta property="og:description" content="Region-agnostic prompt-chain blueprints to repair bounty networks and supercharge restoration work." />
+  <meta property="og:url" content="https://planetaryrestorationarchive.com/" />
+  <meta property="og:image" content="https://planetaryrestorationarchive.com/og-image.png" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Mycelial Strategy Bank — Planetary Restoration" />
+  <meta name="twitter:description" content="Blueprints + guardrails + local LLM + Habitica = regenerative momentum." />
+  <meta name="twitter:image" content="https://planetaryrestorationarchive.com/og-image.png" />
+
+  <!-- ======= Structured Data (JSON-LD) ======= -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Project",
+    "name": "Mycelial Strategy Bank",
+    "url": "https://planetaryrestorationarchive.com/",
+    "description": "Region-agnostic blueprint bank to rewire incentive structures and amplify planetary restoration initiatives.",
+    "keywords": "planetary restoration, anti-corruption, mechanism design, bounty networks, indexeddb, habitica, local llm",
+    "creator": {
+      "@type": "Organization",
+      "name": "Planetary Restoration Archive"
+    },
+    "about": [
+      {"@type":"Thing","name":"Bounty network integrity"},
+      {"@type":"Thing","name":"Mechanism design for public goods"},
+      {"@type":"Thing","name":"Guardrails for ethical deployment"}
+    ]
+  }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Mycelial Strategy Bank",
+    "applicationCategory": "ProductivityApplication",
+    "operatingSystem": "Web",
+    "url": "https://planetaryrestorationarchive.com/",
+    "featureList": [
+      "Offline-first via IndexedDB",
+      "In-browser LLM via WebLLM (WebGPU)",
+      "Habitica task sync",
+      "Prompt-chain blueprint runner",
+      "Succession Mode guardrails"
+    ]
+  }
+  </script>
+
+  <!-- ======= Presentation Schema hook (user-specified) ======= -->
+  <!-- We advertise your custom presentation schema URL so other tools can discover it. -->
+  <link rel="preconnect" href="https://planetaryrestorationarchive.com" />
+  <meta name="presentation-schema" content="https://planetaryrestorationarchive.com/ref/crypto/sol/custom/gpt/rare/peace/engineer/hybrid" />
+
+  <!-- ======= Styles (single-file; no external CSS) ======= -->
+  <style>
+    :root{
+      /* Themed variables tuned for starfield + glass UI */
+      --bg: #03040a;
+      --panel: rgba(12,16,28,0.72);
+      --glass: rgba(255,255,255,0.10);
+      --stroke: rgba(255,255,255,0.14);
+      --text: #E8ECF2;
+      --muted: #9BA7B4;
+      --accent: #6fe3ff;
+      --accent-2: #9ef7a5;
+      --danger: #ff7a7a;
+      --ok: #78f0c2;
+      --code: #0b1020;
+      --glow: drop-shadow(0 0 20px rgba(111,227,255,0.35));
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial}
+    #stars{position:fixed;inset:0;z-index:-2;background:#000}
+    .nebula-overlay{position:fixed;inset:-10%;z-index:-1;pointer-events:none;
+      background: radial-gradient(1200px 700px at 70% 20%, rgba(47,90,255,0.10), transparent 60%),
+                  radial-gradient(900px 600px at 20% 60%, rgba(94,255,190,0.08), transparent 65%),
+                  radial-gradient(600px 400px at 80% 80%, rgba(255,255,255,0.05), transparent 70%);
+      filter: blur(25px) saturate(110%);
+    }
+
+    header{
+      position:sticky;top:0;z-index:10;
+      display:flex;gap:16px;align-items:center;justify-content:space-between;
+      padding:14px 20px;border-bottom:1px solid var(--stroke);background:linear-gradient(180deg, rgba(3,4,10,0.7), rgba(3,4,10,0.35));
+      backdrop-filter: blur(10px);
+    }
+    header h1{margin:0;font-weight:700;letter-spacing:0.2px}
+    header .tag{font-size:12px;color:var(--muted)}
+    .row{display:grid;grid-template-columns:320px 1fr 360px;gap:16px;padding:18px;max-width:1400px;margin:0 auto}
+    @media (max-width:1100px){ .row{grid-template-columns:1fr; } }
+
+    .card{
+      background:linear-gradient(180deg, var(--panel), rgba(12,16,28,0.35));
+      border:1px solid var(--stroke);border-radius:14px;padding:16px;backdrop-filter:blur(8px);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.02) inset;
+    }
+    .card h2,.card h3{margin:0 0 10px 0}
+    .card h2{font-size:18px}
+    .card h3{font-size:15px;color:var(--muted)}
+    .pill{display:inline-flex;gap:6px;align-items:center;padding:4px 10px;border:1px solid var(--stroke);border-radius:999px;font-size:12px;color:var(--muted)}
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      padding:10px 12px;border:1px solid var(--stroke);border-radius:10px;background:var(--glass);color:var(--text);
+      cursor:pointer;user-select:none;transition:transform .05s ease, background .2s ease;
+    }
+    .btn:hover{transform:translateY(-1px);filter:var(--glow)}
+    .btn.primary{border-color:rgba(111,227,255,0.45);background:linear-gradient(180deg, rgba(111,227,255,0.10), rgba(111,227,255,0.04))}
+    .btn.danger{border-color: rgba(255,122,122,0.4); color:#fee;}
+    .btn.small{padding:6px 8px;font-size:12px}
+    input, select, textarea{
+      width:100%;padding:10px;border-radius:10px;border:1px solid var(--stroke);background:rgba(10,14,24,0.65);color:var(--text);outline:none;
+    }
+    label{font-size:12px;color:var(--muted)}
+    textarea{min-height:110px;resize:vertical}
+    .cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .list{display:flex;flex-direction:column;gap:8px;max-height:48vh;overflow:auto}
+    .list .item{padding:10px;border-radius:10px;border:1px solid var(--stroke);cursor:pointer;background:rgba(255,255,255,0.03)}
+    .item small{color:var(--muted)}
+    .monospace{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;background:var(--code);border-radius:10px;padding:10px;overflow:auto}
+    .footer{max-width:1400px;margin:20px auto;padding:0 18px 40px;color:var(--muted);font-size:12px}
+    .kicker{color:var(--accent);text-transform:uppercase;font-weight:700;letter-spacing:0.1em;font-size:11px}
+    .right-rail .section{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+    .progress{height:8px;background:rgba(255,255,255,0.07);border-radius:8px;overflow:hidden}
+    .progress>span{display:block;height:100%;background:linear-gradient(90deg, var(--accent), var(--accent-2));width:0%}
+
+    /* Role-based palette nod to your schema tag */
+    .rare-peace-engineer-hybrid .accent{color:var(--accent)}
+  </style>
+</head>
+<body class="rare-peace-engineer-hybrid">
+
+  <!-- ======= Starfield ======= -->
+  <canvas id="stars" aria-hidden="true"></canvas>
+  <div class="nebula-overlay" aria-hidden="true"></div>
+
+  <!-- ======= Header ======= -->
+  <header>
+    <div>
+      <h1>Mycelial Strategy Bank</h1>
+      <div class="tag">Region‑agnostic prompt‑chain blueprints • indexed • succession‑safe</div>
+    </div>
+    <div style="display:flex; gap:10px; align-items:center">
+      <button id="btnSuccession" class="btn">Succession Mode</button>
+      <button id="btnExport" class="btn">Export JSON</button>
+      <label class="btn small" for="importFile">Import</label>
+      <input id="importFile" type="file" accept=".json" style="display:none" />
+    </div>
+  </header>
+
+  <!-- ======= Main ======= -->
+  <main class="row">
+    <!-- Left: Strategy Bank -->
+    <section class="card" id="bankCard">
+      <div class="kicker">Bank</div>
+      <h2>Strategy Library</h2>
+      <div class="list" id="strategyList" title="click an item to view/edit"></div>
+      <hr style="border-color:var(--stroke);opacity:.6;margin:12px 0">
+      <div class="cols">
+        <div>
+          <label for="newTitle">Title</label>
+          <input id="newTitle" placeholder="e.g., Transparent Multi‑Sig Bounty Escrow" />
+        </div>
+        <div>
+          <label for="newTag">Tag</label>
+          <input id="newTag" placeholder="mechanism-design, integrity, MRV" />
+        </div>
+      </div>
+      <label for="newBody">Notes / Rationale</label>
+      <textarea id="newBody" placeholder="What pattern, what failure mode it fixes, minimal mechanism, safeguards."></textarea>
+      <button id="btnAddStrategy" class="btn primary">Add Strategy</button>
+    </section>
+
+    <!-- Center: Blueprint Runner -->
+    <section class="card" id="runnerCard">
+      <div class="kicker">Blueprints</div>
+      <h2>Prompt‑Chain Runner <span class="pill" id="modelPill">LLM: pending</span></h2>
+
+      <div class="cols">
+        <div>
+          <label for="blueprintSelect">Blueprint</label>
+          <select id="blueprintSelect"></select>
+        </div>
+        <div>
+          <label for="modelSelect">Local Model (WebLLM)</label>
+          <select id="modelSelect">
+            <option value="Llama-3.1-8B-Instruct">Llama‑3.1‑8B‑Instruct (default)</option>
+            <option value="Llama-3.1-8B">Llama‑3.1‑8B (base)</option>
+            <option value="Phi-3-mini-4k-instruct">Phi‑3‑mini‑4k‑instruct</option>
+            <option value="Gemma-2B-it">Gemma‑2B‑it</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top:10px">
+        <label for="context">Context (kept region‑agnostic)</label>
+        <textarea id="context" placeholder="Describe the bounty network, public goods goals, constraints, current integrity failures, and target outcomes. Avoid PII."></textarea>
+      </div>
+
+      <div class="progress" style="margin:10px 0 14px"><span id="loadProgress"></span></div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+        <button id="btnInitLLM" class="btn">Init / Reload Model</button>
+        <button id="btnRunStep" class="btn primary">Run Next Step</button>
+        <button id="btnResetRun" class="btn">Reset Run</button>
+        <span class="pill" id="gpuInfoPill" title="GPU info via WebGPU">GPU: n/a</span>
+      </div>
+
+      <div id="stepMeta" class="pill" style="margin-top:8px">Step: n/a</div>
+      <pre class="monospace" id="runnerOutput" style="min-height:220px" aria-live="polite"></pre>
+      <div style="display:flex; gap:8px; margin-top:10px">
+        <button id="btnSaveStep" class="btn">Save Step Output</button>
+        <button id="btnCopyOut" class="btn">Copy</button>
+      </div>
+
+      <details style="margin-top:14px">
+        <summary class="pill">Guardrails (active)</summary>
+        <div style="font-size:13px; color:var(--muted); margin-top:8px">
+          • No doxxing or personal targeting.  
+          • No illicit access, bribery, or vigilantism.  
+          • Prefer public, auditable sources; flag uncertainty & conflicts.  
+          • De‑identify sensitive examples.  
+          • Route actionable violations to legitimate oversight channels.  
+          • Keep designs region‑agnostic; consult local counsel before deployment.
+        </div>
+      </details>
+    </section>
+
+    <!-- Right: Right Rail -->
+    <aside class="right-rail">
+      <!-- Habitica -->
+      <section class="card">
+        <div class="kicker">Habitica</div>
+        <h2>Task Bridge</h2>
+        <div class="section">
+          <label for="habiticaUser">User ID</label>
+          <input id="habiticaUser" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+          <label for="habiticaKey">API Token (kept local)</label>
+          <input id="habiticaKey" type="password" placeholder="never share this" />
+          <label for="habiticaClient">x-client (tool identifier)</label>
+          <input id="habiticaClient" placeholder="your-user-id-MycelialStrategyBank" />
+          <div style="display:flex; gap:8px">
+            <button id="btnSaveHabitica" class="btn">Save</button>
+            <button id="btnFetchTodos" class="btn">Fetch To‑Dos</button>
+          </div>
+        </div>
+        <div class="section">
+          <label for="todoText">Create To‑Do from current step</label>
+          <input id="todoText" placeholder="Short task title (auto-fills from step)" />
+          <textarea id="todoNotes" placeholder="Notes will include a permalink to the saved step and guardrails."></textarea>
+          <button id="btnCreateTodo" class="btn primary">Push To‑Do</button>
+        </div>
+        <div class="section">
+          <h3>To‑Dos</h3>
+          <div id="todos" class="list" style="max-height:28vh"></div>
+        </div>
+      </section>
+
+      <!-- Succession -->
+      <section class="card" id="successionCard" style="display:none">
+        <div class="kicker">Succession</div>
+        <h2>Next‑Gen Boot Protocol</h2>
+        <ol style="padding-left:18px; margin:10px 0; font-size:14px">
+          <li>Export the JSON backup; mirror it (IPFS / S3 / Git).</li>
+          <li>Review guardrails; sign the ethics affidavit locally.</li>
+          <li>Fork blueprints; keep them region‑agnostic; add citations.</li>
+          <li>Run the “Integrity First” blueprint before any ops.</li>
+          <li>Use public oversight channels for violations—never extrajudicial action.</li>
+        </ol>
+        <button id="btnEthics" class="btn">Sign Ethics Affidavit (local)</button>
+      </section>
+
+      <!-- Translation hook mount -->
+      <section class="card">
+        <div class="kicker">Translation</div>
+        <h2>Auto‑Append</h2>
+        <div id="translation-mount" style="font-size:14px;color:var(--muted)">
+          Attempting to load <code>/ref/translation/script1.html</code>…
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <div class="footer">
+    <strong>Safety & Legality:</strong> This toolkit is for **lawful** integrity improvements in public‑good systems. It deliberately blocks PII‑leaking outputs and suggests procedural, transparent fixes. You own your keys; data is local unless you explicitly sync with Habitica.
+  </div>
+
+  <!-- ======= App (single-file; ESM) ======= -->
+  <script type="module">
+    /* -----------------------------------------------------------
+      Starfield: photoreal‑ish, layered, twinkling + subtle parallax
+    ----------------------------------------------------------- */
+    const starCanvas = document.getElementById('stars');
+    const sctx = starCanvas.getContext('2d');
+    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+    let W = 0, H = 0, stars = [];
+    const LAYERS = [
+      { count: 700, speed: 0.02, size: [0.6,1.2], alpha:[0.5,1] },
+      { count: 400, speed: 0.06, size: [0.8,1.8], alpha:[0.3,0.9] },
+      { count: 150, speed: 0.12, size: [1.2,2.4], alpha:[0.2,0.8] }
+    ];
+    const rand = (a,b)=> a + Math.random()*(b-a);
+    function resizeStars(){
+      W = starCanvas.width = Math.floor(innerWidth * DPR);
+      H = starCanvas.height = Math.floor(innerHeight * DPR);
+      stars = [];
+      for(const layer of LAYERS){
+        for(let i=0;i<layer.count;i++){
+          stars.push({
+            x: Math.random()*W, y: Math.random()*H, z: layer,
+            tw: rand(0, 6.283), tws: rand(0.001, 0.006),
+            hue: rand(180,220), // faint blue‑white bias
+            size: rand(...layer.size), a: rand(...layer.alpha)
+          });
+        }
+      }
+    }
+    resizeStars(); addEventListener('resize', resizeStars);
+
+    let t = 0;
+    function drawStars(){
+      t += 1;
+      sctx.clearRect(0,0,W,H);
+      for(const s of stars){
+        s.x -= s.z.speed * DPR;
+        if(s.x < -2) s.x = W + 2;
+        s.tw += s.tws;
+        const twinkle = 0.6 + 0.4 * Math.sin(s.tw + t*0.002);
+        const alpha = Math.max(0.05, Math.min(1, s.a * twinkle));
+        sctx.beginPath();
+        sctx.fillStyle = `hsla(${s.hue}, 40%, 85%, ${alpha})`;
+        sctx.shadowColor = `hsla(${s.hue}, 100%, 80%, ${alpha*0.6})`;
+        sctx.shadowBlur = 6 * DPR;
+        sctx.arc(s.x, s.y, s.size*DPR, 0, Math.PI*2);
+        sctx.fill();
+      }
+      requestAnimationFrame(drawStars);
+    }
+    drawStars();
+
+    /* -----------------------------------------------------------
+      IndexedDB tiny helper
+    ----------------------------------------------------------- */
+    const DB_NAME = 'mycelial-strategy-bank';
+    const DB_VER = 1;
+    let db;
+    function openDB(){
+      return new Promise((res, rej)=>{
+        const req = indexedDB.open(DB_NAME, DB_VER);
+        req.onupgradeneeded = (e)=>{
+          const d = e.target.result;
+          if(!d.objectStoreNames.contains('strategies')) d.createObjectStore('strategies', { keyPath:'id' });
+          if(!d.objectStoreNames.contains('blueprints')) d.createObjectStore('blueprints', { keyPath:'id' });
+          if(!d.objectStoreNames.contains('settings')) d.createObjectStore('settings', { keyPath:'key' });
+          if(!d.objectStoreNames.contains('runs')) d.createObjectStore('runs', { keyPath:'id' });
+        };
+        req.onsuccess = e => { db = e.target.result; res(); };
+        req.onerror = e => rej(e);
+      });
+    }
+    const idbPut = (store, value)=> new Promise((res,rej)=>{
+      const tx = db.transaction(store, 'readwrite').objectStore(store).put(value);
+      tx.onsuccess = ()=> res(); tx.onerror = (e)=> rej(e);
+    });
+    const idbGet = (store, key)=> new Promise((res,rej)=>{
+      const tx = db.transaction(store, 'readonly').objectStore(store).get(key);
+      tx.onsuccess = (e)=> res(e.target.result); tx.onerror = (e)=> rej(e);
+    });
+    const idbAll = (store)=> new Promise((res,rej)=>{
+      const tx = db.transaction(store, 'readonly').objectStore(store).getAll();
+      tx.onsuccess = (e)=> res(e.target.result || []); tx.onerror = (e)=> rej(e);
+    });
+    const idbDel = (store, key)=> new Promise((res,rej)=>{
+      const tx = db.transaction(store, 'readwrite').objectStore(store).delete(key);
+      tx.onsuccess = ()=> res(); tx.onerror = (e)=> rej(e);
+    });
+
+    /* -----------------------------------------------------------
+      Seeds: strategies + blueprints (region‑agnostic; guardrailed)
+    ----------------------------------------------------------- */
+    const SEED_BLUEPRINTS = [
+      {
+        id: 'bounty-unsnarl-v1',
+        name: 'Integrity‑First Bounty Network Unsnarl',
+        summary: 'Region‑agnostic steps to expose misaligned incentives, design auditable flows, and re‑route funds into verifiable planetary restoration.',
+        steps: [
+          {
+            id:'mv-truth',
+            title:'Minimum Viable Truth',
+            sys: "You are a cautious analyst. Working theory: misaligned bounties can be realigned without naming individuals.",
+            prompt: `Using ONLY publicly verifiable, non-PII inputs, map the bounty program's stated goals vs. measured outcomes. Frame uncertainties; propose 3 falsifiable tests for each claim. Output sections: Goals, Observations, Conflicts, Tests.`
+          },
+          {
+            id:'incentive-map',
+            title:'Incentive Map (Non-personal)',
+            sys: "Model roles, not people. Avoid PII. Flag conflicts as structural patterns.",
+            prompt: `Construct a role-based incentive map for the bounty system (roles: sponsor, triage, implementer, QA, auditor, community). Identify misalignment patterns (e.g., capture, perverse incentives, information asymmetry). Output: Roles, Incentives, Frictions, Failure Patterns.`
+          },
+          {
+            id:'mechanism-redesign',
+            title:'Mechanism Redesign (Auditable)',
+            sys: "Design minimal mechanisms that are auditable, transparent, and easy to pilot.",
+            prompt: `Propose a minimal mechanism redesign: (1) Milestone-escrow with multi-sig release, (2) Open MRV (measurement-reporting-verification) with randomized audits, (3) Quadratic reward split favoring community validators, (4) Public dispute window. Provide: Data needed, On-chain/off-chain options, Abuse-resistance, Pilot plan.`
+          },
+          {
+            id:'risk-safeguards',
+            title:'Risk Register & Safeguards',
+            sys: "Prioritize safety, legality, and non-harm.",
+            prompt: `List top 10 risks (legal, social, security, corruption-adaptation). For each: early indicator, mitigation, and a stop condition. Include a red-team checklist that avoids illegal or intrusive methods.`
+          },
+          {
+            id:'rollout',
+            title:'Pilot → Rollout',
+            sys: "Bias toward reversible pilots; default to transparency.",
+            prompt: `Design a 90-day pilot: scope, roles, public dashboard metrics, budget flow diagram, retro cadence, exit/expand criteria. Provide an adoption playbook for new regions without legal advice (note: always consult local counsel).`
+          }
+        ],
+        guardrails: [
+          "No identification of private individuals.",
+          "No unauthorized access or circumvention.",
+          "Cite public sources; maintain an audit trail.",
+          "De‑identify any sensitive examples.",
+          "Direct violations to legitimate oversight channels."
+        ]
+      }
+    ];
+
+    const SEED_STRATEGIES = [
+      { id:'msig-escrow', title:'Transparent Multi‑Sig Escrow', tag:'mechanism-design', body:'Release bounties via multi-signature thresholds after MRV signoff; public ledger of milestones & justifications.' },
+      { id:'quadratic-validators', title:'Quadratic Reward Split for Validators', tag:'incentives', body:'Reward community validation with quadratic split to reduce capture by large players.' },
+      { id:'randomized-audits', title:'Randomized Open Audits', tag:'integrity', body:'Lottery-sampled audits with public reports; lower gaming; high expected detection.' },
+      { id:'mrv-open', title:'Open MRV Data Room', tag:'mrv', body:'Publish measurement, reporting, verification artifacts; versioned; reproducible scripts.' },
+      { id:'dispute-window', title:'Public Dispute Window', tag:'governance', body:'Timeboxed public challenges before final disbursement; documented resolutions.' }
+    ];
+
+    await openDB();
+    if(!(await idbGet('settings','seeded_v1'))){
+      for(const s of SEED_STRATEGIES) await idbPut('strategies', s);
+      for(const b of SEED_BLUEPRINTS) await idbPut('blueprints', b);
+      await idbPut('settings',{key:'seeded_v1', value:true});
+    }
+
+    /* -----------------------------------------------------------
+      UI: Strategy list + add
+    ----------------------------------------------------------- */
+    const strategyList = document.getElementById('strategyList');
+    const newTitle = document.getElementById('newTitle');
+    const newTag = document.getElementById('newTag');
+    const newBody = document.getElementById('newBody');
+    const btnAddStrategy = document.getElementById('btnAddStrategy');
+
+    async function refreshStrategies(){
+      const items = await idbAll('strategies');
+      items.sort((a,b)=> a.title.localeCompare(b.title));
+      strategyList.innerHTML = items.map(it => `
+        <div class="item" data-id="${it.id}">
+          <strong>${it.title}</strong><br><small>${it.tag}</small>
+        </div>`).join('');
+    }
+    refreshStrategies();
+
+    strategyList.addEventListener('click', async (e)=>{
+      const item = e.target.closest('.item'); if(!item) return;
+      const s = await idbGet('strategies', item.dataset.id);
+      if(!s) return;
+      newTitle.value = s.title; newTag.value = s.tag; newBody.value = s.body;
+      // clicking the item sets edit buffer; Save overwrites by same id
+    });
+
+    btnAddStrategy.addEventListener('click', async ()=>{
+      const id = (newTitle.value || '').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') || ('s-' + crypto.randomUUID());
+      const obj = { id, title:newTitle.value.trim(), tag:newTag.value.trim(), body:newBody.value.trim() };
+      if(!obj.title){ alert('Please set a title'); return; }
+      await idbPut('strategies', obj);
+      newTitle.value = newTag.value = newBody.value = '';
+      refreshStrategies();
+    });
+
+    /* -----------------------------------------------------------
+      Blueprints: select + runner state
+    ----------------------------------------------------------- */
+    const blueprintSelect = document.getElementById('blueprintSelect');
+    const runnerOutput = document.getElementById('runnerOutput');
+    const stepMeta = document.getElementById('stepMeta');
+    const btnRunStep = document.getElementById('btnRunStep');
+    const btnResetRun = document.getElementById('btnResetRun');
+    const btnSaveStep = document.getElementById('btnSaveStep');
+    const btnCopyOut = document.getElementById('btnCopyOut');
+    const contextEl = document.getElementById('context');
+
+    let currentBlueprint = null, stepIndex = 0, lastOutput = '';
+
+    async function refreshBlueprints(){
+      const bps = await idbAll('blueprints');
+      blueprintSelect.innerHTML = bps.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+      if(bps.length){ currentBlueprint = bps[0]; stepIndex = 0; updateStepMeta(); }
+    }
+    function updateStepMeta(){
+      if(!currentBlueprint){ stepMeta.textContent = 'Step: n/a'; return; }
+      const step = currentBlueprint.steps[stepIndex] || null;
+      stepMeta.textContent = step ? `Step ${stepIndex+1}/${currentBlueprint.steps.length}: ${step.title}` : 'All steps complete';
+    }
+    refreshBlueprints();
+
+    blueprintSelect.addEventListener('change', async ()=>{
+      currentBlueprint = await idbGet('blueprints', blueprintSelect.value);
+      stepIndex = 0; updateStepMeta(); runnerOutput.textContent = '';
+    });
+
+    btnResetRun.addEventListener('click', ()=>{
+      stepIndex = 0; runnerOutput.textContent = ''; updateStepMeta();
+    });
+
+    /* -----------------------------------------------------------
+      Guardrails: redact PII-ish patterns and block disallowed content
+    ----------------------------------------------------------- */
+    function redactSensitive(text){
+      if(!text) return text;
+      const rules = [
+        { rx:/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, repl:'[redacted-email]' },
+        { rx:/\b(?:\+?\d{1,3}[-.\s]?)?(?:\(?\d{2,4}\)?[-.\s]?){2,4}\d{2,4}\b/g, repl:'[redacted-phone]' },
+        { rx:/\b\d{3}-\d{2}-\d{4}\b/g, repl:'[redacted-id]' }, // US SSN-ish
+        { rx:/\b(?:acct|account|iban|routing|swift)[^.\n]{0,40}\b[\w-]{6,}\b/gi, repl:'[redacted-finance]' }
+      ];
+      let out = text;
+      for(const r of rules) out = out.replace(r.rx, r.repl);
+      return out;
+    }
+    function violatesPolicy(text){
+      const lower = text.toLowerCase();
+      const banned = [
+        'doxx','doxing','doxxing',
+        'bribe ','accept a bribe','backdoor','exploit to get access',
+        'hack into','credential stuffing','sql injection','xss payload'
+      ];
+      return banned.some(b=> lower.includes(b));
+    }
+
+    /* -----------------------------------------------------------
+      WebLLM: dynamic import; model init; streaming steps
+    ----------------------------------------------------------- */
+    const btnInitLLM = document.getElementById('btnInitLLM');
+    const modelSelect = document.getElementById('modelSelect');
+    const modelPill = document.getElementById('modelPill');
+    const loadProgress = document.getElementById('loadProgress');
+    const gpuInfoPill = document.getElementById('gpuInfoPill');
+
+    let webllmMod = null, engine = null;
+
+    async function initLLM(){
+      modelPill.textContent = 'LLM: loading…';
+      loadProgress.style.width = '5%';
+      try{
+        webllmMod = await import('https://esm.run/@mlc-ai/web-llm@0.2.79');
+        const { CreateMLCEngine } = webllmMod;
+
+        const progress = (p)=>{
+          const pct = Math.max(5, Math.floor((p.progress || 0) * 100));
+          loadProgress.style.width = pct + '%';
+        };
+        engine = await CreateMLCEngine(modelSelect.value, {
+          initProgressCallback: progress,
+          appConfig: { useIndexedDBCache: true } // cache model locally if supported
+        });
+        modelPill.textContent = `LLM: ${modelSelect.value}`;
+        try{
+          const gpu = await engine.getGPUVendor?.();
+          if(gpu) gpuInfoPill.textContent = `GPU: ${gpu}`;
+        }catch{}
+      }catch(err){
+        console.warn('WebLLM init failed', err);
+        modelPill.textContent = 'LLM: unavailable';
+        alert('WebLLM unavailable. Ensure a WebGPU-capable browser and try again.');
+      }finally{
+        setTimeout(()=> loadProgress.style.width = '100%', 300);
+        setTimeout(()=> loadProgress.style.width = '0%', 1000);
+      }
+    }
+    btnInitLLM.addEventListener('click', initLLM);
+
+    async function runNextStep(){
+      if(!currentBlueprint){ alert('No blueprint selected'); return; }
+      const step = currentBlueprint.steps[stepIndex];
+      if(!step){ runnerOutput.textContent += '\n---\nAll steps complete.'; return; }
+      if(!engine){ alert('Init the LLM first.'); return; }
+
+      const sys = step.sys + " Always avoid PII; produce region-agnostic outputs; include checklists, metrics, and clear next actions.";
+      const user = `CONTEXT:\n${contextEl.value || '(none provided)'}\n\nTASK:\n${step.prompt}`;
+
+      let out = '';
+      try{
+        const chunks = await engine.chat.completions.create({
+          messages: [
+            { role: 'system', content: sys },
+            { role: 'user', content: user }
+          ],
+          stream: true,
+          temperature: 0.7,
+          top_p: 0.9,
+        });
+        for await (const ch of chunks){
+          out += ch.choices?.[0]?.delta?.content || '';
+          const safe = redactSensitive(out);
+          if(violatesPolicy(safe)){
+            out = "[blocked: violates safety policy]";
+            break;
+          }
+          runnerOutput.textContent = safe;
+          runnerOutput.scrollTop = runnerOutput.scrollHeight;
+        }
+      }catch(err){
+        out = `Error: ${String(err)}`;
+      }
+      lastOutput = redactSensitive(out);
+      stepIndex = Math.min(stepIndex+1, currentBlueprint.steps.length);
+      updateStepMeta();
+    }
+    btnRunStep.addEventListener('click', runNextStep);
+
+    btnSaveStep.addEventListener('click', async ()=>{
+      if(!lastOutput){ alert('Nothing to save yet.'); return; }
+      const runId = 'run-' + Date.now();
+      await idbPut('runs', { id: runId, blueprint: currentBlueprint.id, step: stepIndex, output: lastOutput, context: contextEl.value, t: new Date().toISOString() });
+      alert('Saved locally.');
+    });
+    btnCopyOut.addEventListener('click', ()=>{
+      navigator.clipboard.writeText(runnerOutput.textContent || '');
+    });
+
+    /* -----------------------------------------------------------
+      Export / Import
+    ----------------------------------------------------------- */
+    const btnExport = document.getElementById('btnExport');
+    const importFile = document.getElementById('importFile');
+    btnExport.addEventListener('click', async ()=>{
+      const dump = {
+        strategies: await idbAll('strategies'),
+        blueprints: await idbAll('blueprints'),
+        runs: await idbAll('runs'),
+        settings: await idbAll('settings')
+      };
+      const blob = new Blob([JSON.stringify(dump, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'mycelial-strategy-bank.json'; a.click();
+      URL.revokeObjectURL(url);
+    });
+    importFile.addEventListener('change', async (e)=>{
+      const file = e.target.files[0]; if(!file) return;
+      const text = await file.text(); const obj = JSON.parse(text);
+      for(const s of (obj.strategies||[])) await idbPut('strategies', s);
+      for(const b of (obj.blueprints||[])) await idbPut('blueprints', b);
+      for(const r of (obj.runs||[])) await idbPut('runs', r);
+      for(const s of (obj.settings||[])) await idbPut('settings', s);
+      await refreshStrategies(); await refreshBlueprints();
+      alert('Import complete.');
+    });
+
+    /* -----------------------------------------------------------
+      Habitica Integration (local credentials; fetch & push To‑Dos)
+    ----------------------------------------------------------- */
+    const habiticaUser = document.getElementById('habiticaUser');
+    const habiticaKey  = document.getElementById('habiticaKey');
+    const habiticaClient = document.getElementById('habiticaClient');
+    const btnSaveHabitica = document.getElementById('btnSaveHabitica');
+    const btnFetchTodos = document.getElementById('btnFetchTodos');
+    const btnCreateTodo = document.getElementById('btnCreateTodo');
+    const todoText = document.getElementById('todoText');
+    const todoNotes = document.getElementById('todoNotes');
+    const todosEl = document.getElementById('todos');
+
+    async function loadHabiticaCreds(){
+      const s = (await idbGet('settings','habitica'))?.value || {};
+      habiticaUser.value = s.user || '';
+      habiticaKey.value = s.key || '';
+      habiticaClient.value = s.client || '';
+    }
+    loadHabiticaCreds();
+
+    btnSaveHabitica.addEventListener('click', async ()=>{
+      await idbPut('settings', { key:'habitica', value: { user:habiticaUser.value.trim(), key:habiticaKey.value.trim(), client:habiticaClient.value.trim() } });
+      alert('Habitica creds saved locally.');
+    });
+
+    async function hFetch(path, method='GET', body=null){
+      const base = 'https://habitica.com/api/v3';
+      const u = habiticaUser.value.trim();
+      const k = habiticaKey.value.trim();
+      const c = (habiticaClient.value.trim() || (u? `${u}-MycelialStrategyBank` : 'anonymous-MycelialStrategyBank'));
+      const headers = {
+        'x-api-user': u, 'x-api-key': k, 'x-client': c,
+        'content-type': 'application/json'
+      };
+      const res = await fetch(base + path, { method, headers, body: body? JSON.stringify(body): undefined });
+      if(!res.ok) throw new Error('Habitica: '+res.status+' '+(await res.text()));
+      return res.json();
+    }
+
+    btnFetchTodos.addEventListener('click', async ()=>{
+      try{
+        const j = await hFetch('/tasks/user?type=todos', 'GET');
+        const items = j?.data || [];
+        todosEl.innerHTML = items.slice(0,50).map(t=> `<div class="item"><strong>${t.text}</strong><br><small>${t.id}</small></div>`).join('');
+      }catch(e){ alert(e.message); }
+    });
+
+    btnCreateTodo.addEventListener('click', async ()=>{
+      const text = (todoText.value || runnerOutput.textContent.split('\n')[0] || 'Blueprint task').slice(0,100);
+      const notes = (todoNotes.value || ('From Mycelial Strategy Bank. Guardrails active.\n\n' + (runnerOutput.textContent || ''))).slice(0,5000);
+      try{
+        await hFetch('/tasks/user', 'POST', { text, type:'todo', notes });
+        alert('Pushed to Habitica.');
+        todoText.value = ''; todoNotes.value = '';
+        btnFetchTodos.click();
+      }catch(e){ alert(e.message); }
+    });
+
+    /* -----------------------------------------------------------
+      Succession Mode (local affirmative ethics tick)
+    ----------------------------------------------------------- */
+    const btnSuccession = document.getElementById('btnSuccession');
+    const btnEthics = document.getElementById('btnEthics');
+    const successionCard = document.getElementById('successionCard');
+    btnSuccession.addEventListener('click', ()=>{ successionCard.style.display = successionCard.style.display==='none'?'block':'none'; });
+    btnEthics.addEventListener('click', async ()=>{
+      await idbPut('settings', { key:'ethics_signed', value:{ at:new Date().toISOString() } });
+      alert('Ethics affidavit signed locally.');
+    });
+
+    /* -----------------------------------------------------------
+      Append Translation Script (user-specified HTML resource)
+    ----------------------------------------------------------- */
+    (async ()=>{
+      try{
+        const url = 'https://planetaryrestorationarchive.com/ref/translation/script1.html';
+        const res = await fetch(url, { mode:'cors' });
+        if(res.ok){
+          const html = await res.text();
+          document.getElementById('translation-mount').innerHTML = html;
+        } else {
+          document.getElementById('translation-mount').textContent = 'Could not load translation script (network/CORS).';
+        }
+      }catch{
+        document.getElementById('translation-mount').textContent = 'Translation script unavailable offline.';
+      }
+    })();
+
+    /* -----------------------------------------------------------
+      Convenience: auto-fill To‑Do title from current step
+    ----------------------------------------------------------- */
+    const btnRunStepRefill = ()=>{
+      const step = currentBlueprint?.steps?.[Math.max(0, stepIndex-1)];
+      if(step){ todoText.value = step.title + ' — next actions'; }
+    };
+    btnRunStep.addEventListener('click', ()=> setTimeout(btnRunStepRefill, 500));
+
+  </script>
+</body>
+</html>

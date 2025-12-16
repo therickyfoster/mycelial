@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- [meta/head] Collaboration & Sharing layer for the Mycelial Strategy Bank -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Mycelial Strategy Bank — Collaboration & Sharing</title>
+  <meta name="description" content="Share codes, CRDT-style merges, trust rubric, moderation flags, provenance receipts, and offline caching for the PRA Strategy Bank." />
+  <style>
+    :root{
+      --bg:#0b0f13; --card:#11161c; --ink:#eaf3ff; --muted:#9fb0c2;
+      --brand:#67f0b2; --accent:#8bb0ff; --warn:#ffd166; --danger:#ff6b6b; --ok:#7ae582; --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+    header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,rgba(9,12,16,.9),rgba(9,12,16,.6));border-bottom:1px solid #1b232c;backdrop-filter:blur(6px)}
+    .wrap{max-width:1180px;margin:0 auto;padding:18px 16px}
+    h1{margin:0;font-weight:800;letter-spacing:.2px}
+    .sub{color:var(--muted);margin-top:6px}
+    .grid{display:grid;grid-template-columns:1.15fr 1fr;gap:16px}
+    @media (max-width:980px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--card);border:1px solid #1b232c;border-radius:var(--radius);padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .muted{color:var(--muted)}
+    .pill{padding:2px 8px;border-radius:999px;border:1px solid #26313b;color:var(--muted);font-size:12px}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    label{display:block;font-weight:650;margin:10px 0 6px}
+    input,textarea,select{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #24313c;background:#0d1318;color:var(--ink);font:inherit}
+    textarea{min-height:90px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid #273340;background:#0c1217;color:var(--ink);border-radius:12px;cursor:pointer}
+    .btn:hover{background:#101821}
+    .btn.brand{border-color:#1b3d31;background:#0b1411;color:#dcffef}
+    .btn.warn{border-color:#3b341f;background:#17140b;color:#fff0c9}
+    .btn.danger{border-color:#3b1f1f;background:#170b0b;color:#ffe0e0}
+    .btn.ghost{background:transparent}
+    .divider{height:1px;background:#1b232c;margin:12px 0}
+    .list{display:grid;gap:10px}
+    .item{padding:12px;border-radius:14px;border:1px solid #23303b;background:#0e1419}
+    .item h4{margin:0 0 4px}
+    .badge{font-size:11px;border:1px solid #2a3541;border-radius:999px;padding:2px 6px;color:#9ab6cf}
+    .diff{display:grid;gap:8px;background:#0a0f13;border:1px dashed #2b3844;border-radius:12px;padding:10px}
+    .k{color:#9bb9ff}
+    .v{color:#d2ffe7}
+    .fingerprint{font-family:ui-monospace,Menlo,Consolas,monospace;word-break:break-all;font-size:12px;color:#93a4b6}
+    .float-chat{position:fixed;bottom:18px;right:18px;z-index:20;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+    .chat-box{display:none;width:min(420px,94vw);height:62vh;border:1px solid #1b2129;border-radius:14px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+    footer{margin-top:28px;padding:18px 0 36px;color:var(--muted)}
+    .hint{font-size:12px;color:#9fb0c2}
+    .trust-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media (max-width:780px){.trust-row{grid-template-columns:1fr}}
+    .score{font-size:28px;font-weight:800}
+    .good{color:var(--ok)} .mid{color:var(--warn)} .bad{color:var(--danger)}
+    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:#0e151b;border:1px solid #25313c;color:#eaf3ff;padding:10px 14px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:50;display:none}
+  </style>
+</head>
+<body>
+  <!-- [topbar] -->
+  <header>
+    <div class="wrap">
+      <h1>Mycelial Strategy Bank <span class="pill">Collaboration & Sharing</span></h1>
+      <div class="sub">Compact share codes • Diff/merge • Trust rubric • Moderation • Provenance receipts • Offline cache.</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <!-- [left: share/import/diff] -->
+      <section class="card">
+        <h2>Share & Import</h2>
+        <p class="muted">Create a compact share code from your local selection, or paste a code to preview, trust-score, and merge.</p>
+
+        <div class="row">
+          <button class="btn brand" id="btn-refresh">Refresh Lists</button>
+          <span class="pill" id="identity-pill">identity: …</span>
+        </div>
+
+        <label>Select plans to share (IDs comma-sep)</label>
+        <input id="sel-ids" placeholder="plan_abc…, plan_def…" />
+        <div class="row">
+          <button class="btn" id="btn-build-share">Build Share Code</button>
+          <button class="btn ghost" id="btn-copy-share" title="Copy share code to clipboard">Copy</button>
+        </div>
+        <label>Share Code (URL-safe)</label>
+        <textarea id="share-out" placeholder="Generated code will appear here…" readonly></textarea>
+        <div class="hint">This is a compact, URL-safe Base64 string that includes selected records, a provenance receipt, and a content fingerprint.</div>
+
+        <div class="divider"></div>
+
+        <h3>Import Preview</h3>
+        <label>Paste Share Code</label>
+        <textarea id="share-in" placeholder="Paste code to preview & trust-score…"></textarea>
+        <div class="row">
+          <button class="btn" id="btn-preview">Preview & Score</button>
+          <button class="btn warn" id="btn-merge">Merge Into Bank</button>
+        </div>
+
+        <div id="preview" class="list" style="margin-top:10px"></div>
+
+        <div class="divider"></div>
+        <h3>Diff / Merge Hints</h3>
+        <p class="muted">CRDT-style: last-write-wins per field (ISO timestamp), plus human review for conflicts.</p>
+        <div id="diff-box" class="diff">
+          <div class="hint">No diff yet. After preview, conflicts appear here.</div>
+        </div>
+
+      </section>
+
+      <!-- [right: trust/moderation/provenance] -->
+      <section class="card">
+        <h2>Trust & Moderation</h2>
+        <p class="muted">Score incoming payloads; set flags; see provenance chains & fingerprints to preserve attribution.</p>
+
+        <div class="trust-row">
+          <div class="item">
+            <h4>Trust Rubric</h4>
+            <div class="hint">Heuristics (0–100): source overlap, recency, fingerprint parity, and author matches.</div>
+            <div class="divider"></div>
+            <div><strong>Score:</strong> <span id="trust-score" class="score mid">—</span></div>
+            <div class="list" id="trust-notes" style="margin-top:8px"></div>
+          </div>
+
+          <div class="item">
+            <h4>Moderation Flags</h4>
+            <div class="hint">Apply flags to any plan after import. Flags sync with exports as metadata.</div>
+            <label>Plan ID</label>
+            <input id="mod-id" placeholder="plan_xxx…" />
+            <label>Flag</label>
+            <select id="mod-flag">
+              <option value="none">none</option>
+              <option value="spam">spam</option>
+              <option value="unsafe">unsafe</option>
+              <option value="duplicate">duplicate</option>
+              <option value="needs-proof">needs-proof</option>
+            </select>
+            <label>Note (optional)</label>
+            <textarea id="mod-note" placeholder="Why flagged? …"></textarea>
+            <div class="row" style="margin-top:8px">
+              <button class="btn danger" id="btn-apply-flag">Apply Flag</button>
+              <button class="btn" id="btn-clear-flag">Clear Flag</button>
+            </div>
+            <div class="divider"></div>
+            <div class="hint">Flags are stored in the plan’s metadata and exported in share codes.</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <h3>Provenance & Receipts</h3>
+        <div class="hint">Each export embeds: exporter identity, time, source fingerprint, and prior chain entries.</div>
+
+        <div class="item">
+          <h4>Local Bank Fingerprint</h4>
+          <div class="hint">Stable SHA-256 over normalized local content.</div>
+          <div class="fingerprint" id="fp-local">…</div>
+          <div class="row" style="margin-top:8px">
+            <button class="btn" id="btn-rehash">Rehash</button>
+          </div>
+        </div>
+
+        <div class="item" style="margin-top:10px">
+          <h4>Last Imported Receipt</h4>
+          <div id="prov-last" class="list"></div>
+        </div>
+
+      </section>
+    </div>
+
+    <footer>
+      <div class="muted">
+        Attribution: <strong>Ricky Foster + Navi</strong> — Planetary Restoration Archive. 
+        “If this moved you, let it move through you.” — PRA
+      </div>
+    </footer>
+  </main>
+
+  <!-- [chat overlay] -->
+  <div class="float-chat">
+    <div class="chat-box" id="chat-box">
+      <iframe src="https://tlk.io/planetary-restoration-archive" title="PRA Chat" style="width:100%;height:100%;border:0;background:#0b0f13"></iframe>
+    </div>
+    <button class="btn" id="btn-toggle-chat" title="Toggle chat overlay">Chat</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+  /* ==========================================================
+     [core/db] Shared DB schema with Part 1
+     ========================================================== */
+  const DB_NAME = 'PRA_StrategyBank';
+  const DB_VER  = 1;
+  const STORES = {
+    plans:'plans', evidence:'evidence', merges:'merges', profiles:'profiles', votes:'votes'
+  };
+
+  const $ = s => document.querySelector(s);
+  const nowISO = () => new Date().toISOString();
+
+  function openDB(){
+    return new Promise((resolve, reject)=>{
+      const r = indexedDB.open(DB_NAME, DB_VER);
+      r.onupgradeneeded = (e)=>{
+        const db = r.result;
+        if(!db.objectStoreNames.contains('plans')){
+          const s = db.createObjectStore('plans',{keyPath:'id'});
+          s.createIndex('by_status','status',{unique:false});
+          s.createIndex('by_updated','updatedAt',{unique:false});
+        }
+        if(!db.objectStoreNames.contains('evidence')){
+          const s = db.createObjectStore('evidence',{keyPath:'id'});
+          s.createIndex('by_plan','planId',{unique:false});
+        }
+        if(!db.objectStoreNames.contains('merges')) db.createObjectStore('merges',{keyPath:'id'});
+        if(!db.objectStoreNames.contains('profiles')) db.createObjectStore('profiles',{keyPath:'id'});
+        if(!db.objectStoreNames.contains('votes')) db.createObjectStore('votes',{keyPath:'id'});
+      };
+      r.onsuccess = ()=>resolve(r.result);
+      r.onerror   = ()=>reject(r.error);
+    });
+  }
+  async function dbGet(store, key){
+    const db = await openDB();
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction(store,'readonly'); const os=tx.objectStore(store);
+      const req=os.get(key); req.onsuccess=()=>resolve(req.result||null); req.onerror=()=>reject(req.error);
+    });
+  }
+  async function dbPut(store, val){
+    const db = await openDB();
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction(store,'readwrite'); const os=tx.objectStore(store);
+      const req=os.put(val); req.onsuccess=()=>resolve(val); req.onerror=()=>reject(req.error);
+    });
+  }
+  async function dbAll(store){
+    const db = await openDB();
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction(store,'readonly'); const os=tx.objectStore(store);
+      const req=os.getAll(); req.onsuccess=()=>resolve(req.result||[]); req.onerror=()=>reject(req.error);
+    });
+  }
+
+  /* ==========================================================
+     [crypto/utils] Base64url, SHA-256, compact share payloads
+     ========================================================== */
+  function b64uEncode(bytes){
+    let bin = '';
+    bytes.forEach(b=>bin += String.fromCharCode(b));
+    const b64 = btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    return b64;
+  }
+  function b64uDecode(str){
+    str = str.replace(/-/g,'+').replace(/_/g,'/');
+    const pad = str.length%4; if(pad) str += '='.repeat(4-pad);
+    const bin = atob(str);
+    const out = new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
+    return out;
+  }
+  async function sha256Hex(str){
+    const enc = new TextEncoder();
+    const buf = await crypto.subtle.digest('SHA-256', enc.encode(str));
+    const view = new Uint8Array(buf);
+    return Array.from(view).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+
+  async function getIdentity(){
+    let me = await dbGet('profiles','me');
+    if(!me){
+      const mnemonic = 'local-anonymous-seed'; // should exist from Part 1; fallback if not
+      const pubId = (await sha256Hex(mnemonic)).slice(0,16);
+      me = { id:'me', mnemonic, pubId };
+      await dbPut('profiles', me);
+    }
+    $('#identity-pill').textContent = `identity: ${me.pubId}`;
+    return me;
+  }
+
+  /* ==========================================================
+     [fingerprint] Stable hash over normalized content
+     ========================================================== */
+  async function localFingerprint(){
+    const payload = {
+      plans: await dbAll('plans'),
+      evidence: await dbAll('evidence'),
+      merges: await dbAll('merges')
+    };
+    payload.plans.sort((a,b)=>a.id.localeCompare(b.id));
+    payload.evidence.sort((a,b)=>a.id.localeCompare(b.id));
+    payload.merges.sort((a,b)=>a.id.localeCompare(b.id));
+    return sha256Hex(JSON.stringify(payload));
+  }
+
+  /* ==========================================================
+     [share] Build & parse share codes
+     ========================================================== */
+  function pick(obj, keys){ const o={}; for(const k of keys) if(k in obj) o[k]=obj[k]; return o; }
+
+  async function buildShareByIds(ids){
+    const all = await dbAll('plans');
+    const chosen = all.filter(p=>ids.includes(p.id));
+    const evAll = await dbAll('evidence');
+    const ev = evAll.filter(e => ids.includes(e.planId));
+    const merges = await dbAll('merges');
+    const mergesLinked = merges.filter(m => (m.childIds||[]).some(id=>ids.includes(id)) || (chosen.some(p=>p.mergeRef===m.id)));
+
+    // Attach moderation flags if exist in plan.meta
+    const minimalPlans = chosen.map(p=>{
+      const keep = ['id','title','heartbeat','actions','proof','tags','status','author','createdAt','updatedAt','metrics','mergeRef','meta'];
+      return pick(p, keep);
+    });
+
+    const exporter = await getIdentity();
+    const bankFp = await localFingerprint();
+
+    // provenance receipt
+    const receipt = {
+      exportedAt: nowISO(),
+      exporter: exporter.pubId,
+      bankFingerprint: bankFp,
+      chain: [] // extended by importers
+    };
+
+    const payload = {
+      v:1,
+      kind:'PRA_SHARE',
+      receipt,
+      plans:minimalPlans,
+      evidence:ev,
+      merges:mergesLinked
+    };
+
+    const json = JSON.stringify(payload);
+    const bytes = new TextEncoder().encode(json);
+    // simple compression: none (keep deterministic). Optionally add compression later.
+    const code = b64uEncode(bytes);
+    return { code, payload };
+  }
+
+  function parseShare(code){
+    try{
+      const bytes = b64uDecode(code.trim());
+      const json = new TextDecoder().decode(bytes);
+      const obj = JSON.parse(json);
+      if(obj?.kind!=='PRA_SHARE') throw new Error('Not a PRA share payload');
+      return obj;
+    }catch(err){
+      throw new Error('Invalid share code: '+err.message);
+    }
+  }
+
+  /* ==========================================================
+     [trust] Heuristic scoring
+     ========================================================== */
+  async function scorePayload(payload){
+    const notes = [];
+    let score = 50;
+
+    // 1) Version/kind sanity
+    if(payload.v===1 && payload.kind==='PRA_SHARE'){ score+=5; notes.push('Format ok (+5)'); } else { score-=20; notes.push('Unexpected format (-20)'); }
+
+    // 2) Recent export time
+    const t = Date.parse(payload?.receipt?.exportedAt || 0);
+    if(Number.isFinite(t)){
+      const ageH = (Date.now()-t)/36e5;
+      if(ageH < 24){ score+=12; notes.push('Fresh export (<24h) (+12)'); }
+      else if(ageH < 168){ score+=6; notes.push('Recent export (<7d) (+6)'); }
+      else { score-=4; notes.push('Stale export (≥7d) (-4)'); }
+    }else{ score-=6; notes.push('Missing/invalid timestamp (-6)'); }
+
+    // 3) Fingerprint parity: if local fp appears in chain, boost trust
+    const localFp = await localFingerprint();
+    if(payload.receipt?.bankFingerprint === localFp){
+      score += 15; notes.push('Source fingerprint matches local (+15)');
+    }else{
+      // if chain includes local fp, still positive
+      const inChain = (payload.receipt?.chain||[]).some(c=>c.bankFingerprint===localFp);
+      if(inChain){ score += 8; notes.push('Prior chain references local (+8)'); }
+      else { notes.push('No parity with local fingerprint (0)'); }
+    }
+
+    // 4) Author overlap
+    const my = await getIdentity();
+    const authors = new Set((payload.plans||[]).map(p=>p.author).filter(Boolean));
+    if(authors.has(my.pubId)){ score += 10; notes.push('Includes my authored plans (+10)'); }
+
+    // 5) Volume sanity
+    const nPlans = (payload.plans||[]).length;
+    if(nPlans===0){ score -= 10; notes.push('No plans (-10)'); }
+    else if(nPlans>200){ score -= 6; notes.push('Very large payload (-6)'); }
+    else { score += 2; notes.push('Reasonable size (+2)'); }
+
+    // clamp
+    if(score<0) score=0; if(score>100) score=100;
+
+    return { score, notes };
+  }
+
+  /* ==========================================================
+     [diff/merge] CRDT-ish: last-write-wins per field + conflict list
+     ========================================================== */
+  const FIELDS = ['title','heartbeat','actions','proof','tags','status','author','createdAt','updatedAt','metrics','mergeRef','meta'];
+
+  function planIndex(plans){ const m=new Map(); for(const p of plans) m.set(p.id,p); return m; }
+
+  function comparePlans(local, incoming){
+    // returns {merged, conflicts: [{id, field, localVal, incomingVal, winner}]}
+    const merged = structuredClone(local||incoming);
+    const conflicts = [];
+    const a = local || {};
+    const b = incoming || {};
+    for(const f of FIELDS){
+      const av = a?.[f];
+      const bv = b?.[f];
+      if(typeof av==='undefined'){ merged[f]=bv; continue; }
+      if(typeof bv==='undefined'){ merged[f]=av; continue; }
+
+      if(JSON.stringify(av)===JSON.stringify(bv)){ merged[f]=av; continue; }
+
+      // last-write-wins by updatedAt (fallback to incoming)
+      const ta = Date.parse(a.updatedAt||0), tb = Date.parse(b.updatedAt||0);
+      const winner = (tb>=ta)?'incoming':'local';
+      merged[f] = (winner==='incoming')? bv : av;
+
+      conflicts.push({ id: (a.id||b.id), field:f, localVal:av, incomingVal: bv, winner });
+    }
+    return { merged, conflicts };
+  }
+
+  async function mergePayload(payload){
+    const result = { upserted:[], conflicts:[] };
+
+    // Extend provenance
+    const me = await getIdentity();
+    const myFp = await localFingerprint();
+    const receiptEntry = { importedAt: nowISO(), importer: me.pubId, bankFingerprint: myFp };
+    payload.receipt = payload.receipt || {};
+    payload.receipt.chain = Array.isArray(payload.receipt.chain)? payload.receipt.chain : [];
+    payload.receipt.chain.push(receiptEntry);
+
+    // Merge plans
+    const localPlans = await dbAll('plans');
+    const map = planIndex(localPlans);
+
+    for(const inc of (payload.plans||[])){
+      const loc = map.get(inc.id);
+      const { merged, conflicts } = comparePlans(loc, inc);
+      merged.updatedAt = nowISO(); // record merge time
+      await dbPut('plans', merged);
+      result.upserted.push(merged.id);
+      if(conflicts.length) result.conflicts.push(...conflicts);
+    }
+
+    // Upsert evidence (idempotent by id)
+    for(const ev of (payload.evidence||[])) await dbPut('evidence', ev);
+
+    // Upsert merges
+    for(const m of (payload.merges||[])) await dbPut('merges', m);
+
+    // Record last receipt locally for UI
+    localStorage.setItem('pra_last_receipt', JSON.stringify(payload.receipt));
+
+    return result;
+  }
+
+  /* ==========================================================
+     [moderation] flags in plan.meta
+     ========================================================== */
+  async function setFlag(planId, flag, note){
+    const plans = await dbAll('plans');
+    const p = plans.find(x=>x.id===planId);
+    if(!p) throw new Error('Unknown plan ID');
+    p.meta = p.meta || {};
+    p.meta.flags = p.meta.flags || [];
+    // if clearing
+    if(flag==='none'){ p.meta.flags = []; }
+    else{
+      p.meta.flags.push({ flag, note: (note||null), by:(await getIdentity()).pubId, at: nowISO() });
+    }
+    p.updatedAt = nowISO();
+    await dbPut('plans', p);
+    return p.meta.flags;
+  }
+
+  /* ==========================================================
+     [ui/helpers]
+     ========================================================== */
+  function toast(msg, ms=2200){
+    const t = $('#toast');
+    t.textContent = msg; t.style.display='block';
+    setTimeout(()=>{ t.style.display='none'; }, ms);
+  }
+
+  function escapeHTML(s){
+    return (s||'').toString().replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;' }[c]));
+  }
+
+  function renderPreview(payload){
+    const root = $('#preview'); root.innerHTML='';
+    const nPlans = (payload.plans||[]).length;
+    const nE = (payload.evidence||[]).length;
+    const nM = (payload.merges||[]).length;
+
+    const head = document.createElement('div');
+    head.className='item';
+    head.innerHTML = `
+      <div class="row" style="justify-content:space-between">
+        <h4>Payload Summary</h4>
+        <span class="badge">plans: ${nPlans} • evidence: ${nE} • merges: ${nM}</span>
+      </div>
+      <div class="muted">exportedAt: ${escapeHTML(payload.receipt?.exportedAt||'?')} • exporter: <code>${escapeHTML(payload.receipt?.exporter||'?')}</code></div>
+      <div class="muted">source fp: <span class="fingerprint">${escapeHTML(payload.receipt?.bankFingerprint||'?')}</span></div>
+    `;
+    root.appendChild(head);
+
+    for(const p of (payload.plans||[])){
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML = `
+        <h4>${escapeHTML(p.title)}</h4>
+        <div class="muted">ID: <code>${p.id}</code> • status: <span class="badge">${escapeHTML(p.status||'seed')}</span> • by <code>${escapeHTML(p.author||'?')}</code></div>
+        <div><strong>Heartbeat:</strong> ${escapeHTML(p.heartbeat||'')}</div>
+        <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:6px">
+          ${(p.tags||[]).map(t=>`<span class="badge">#${escapeHTML(t)}</span>`).join('')}
+        </div>
+      `;
+      root.appendChild(div);
+    }
+  }
+
+  async function renderDiff(payload){
+    const box = $('#diff-box');
+    box.innerHTML = '';
+    const localPlans = await dbAll('plans');
+    const map = planIndex(localPlans);
+
+    let totalConf = 0;
+    for(const inc of (payload.plans||[])){
+      const loc = map.get(inc.id);
+      if(!loc) continue;
+      const { conflicts } = comparePlans(loc, inc);
+      if(!conflicts.length) continue;
+      totalConf += conflicts.length;
+
+      const div = document.createElement('div');
+      div.className='item';
+      div.innerHTML = `<h4>Conflicts for <code>${inc.id}</code> — ${escapeHTML(inc.title||'')}</h4>`;
+      for(const c of conflicts){
+        const row = document.createElement('div');
+        row.innerHTML = `
+          <div><span class="k">${escapeHTML(c.field)}</span></div>
+          <div class="hint">winner: <strong>${escapeHTML(c.winner)}</strong></div>
+          <div class="row" style="gap:10px;margin-top:6px">
+            <div style="flex:1"><strong>local</strong><pre style="white-space:pre-wrap;margin:0">${escapeHTML(JSON.stringify(c.localVal,null,2))}</pre></div>
+            <div style="flex:1"><strong>incoming</strong><pre style="white-space:pre-wrap;margin:0">${escapeHTML(JSON.stringify(c.incomingVal,null,2))}</pre></div>
+          </div>
+        `;
+        div.appendChild(row);
+      }
+      box.appendChild(div);
+    }
+    if(totalConf===0){
+      const div = document.createElement('div');
+      div.className='hint';
+      div.textContent = 'No conflicts detected.';
+      box.appendChild(div);
+    }
+  }
+
+  function renderTrust({score, notes}){
+    const el = $('#trust-score');
+    el.textContent = String(score);
+    el.classList.remove('good','mid','bad');
+    if(score>=75) el.classList.add('good'); else if(score>=45) el.classList.add('mid'); else el.classList.add('bad');
+
+    const notesBox = $('#trust-notes'); notesBox.innerHTML='';
+    for(const n of notes){
+      const li = document.createElement('div');
+      li.className = 'hint';
+      li.textContent = '• ' + n;
+      notesBox.appendChild(li);
+    }
+  }
+
+  function renderLastReceipt(){
+    const el = $('#prov-last'); el.innerHTML='';
+    const raw = localStorage.getItem('pra_last_receipt');
+    if(!raw){ el.innerHTML = '<div class="hint">None yet.</div>'; return; }
+    try{
+      const r = JSON.parse(raw);
+      const wrap = document.createElement('div');
+      wrap.className='item';
+      wrap.innerHTML = `
+        <div class="muted">imported chain length: ${(r.chain||[]).length}</div>
+        ${(r.chain||[]).map(step=>`
+          <div style="margin-top:6px">
+            <div>importer: <code>${escapeHTML(step.importer||'?')}</code> • at: ${escapeHTML(step.importedAt||'?')}</div>
+            <div class="fingerprint">fp: ${escapeHTML(step.bankFingerprint||'?')}</div>
+          </div>
+        `).join('')}
+      `;
+      el.appendChild(wrap);
+    }catch(e){
+      el.innerHTML = '<div class="hint">Receipt parse error.</div>';
+    }
+  }
+
+  /* ==========================================================
+     [events/wire]
+     ========================================================== */
+  let lastPreview = null;
+
+  async function refresh(){
+    await getIdentity();
+    $('#fp-local').textContent = await localFingerprint();
+    renderLastReceipt();
+    toast('Lists refreshed');
+  }
+
+  $('#btn-refresh').addEventListener('click', refresh);
+  $('#btn-rehash').addEventListener('click', async()=>{
+    $('#fp-local').textContent = await localFingerprint();
+    toast('Fingerprint recalculated');
+  });
+
+  $('#btn-build-share').addEventListener('click', async()=>{
+    const ids = $('#sel-ids').value.split(',').map(s=>s.trim()).filter(Boolean);
+    if(ids.length===0){ toast('Add at least one plan ID'); return; }
+    const { code } = await buildShareByIds(ids);
+    $('#share-out').value = code;
+    toast('Share code generated');
+  });
+
+  $('#btn-copy-share').addEventListener('click', async()=>{
+    const v = $('#share-out').value.trim();
+    if(!v){ toast('Nothing to copy'); return; }
+    await navigator.clipboard.writeText(v);
+    toast('Copied share code');
+  });
+
+  $('#btn-preview').addEventListener('click', async()=>{
+    const code = $('#share-in').value.trim();
+    if(!code){ toast('Paste a share code'); return; }
+    try{
+      const payload = parseShare(code);
+      lastPreview = payload;
+      renderPreview(payload);
+      renderDiff(payload);
+      const trust = await scorePayload(payload);
+      renderTrust(trust);
+      toast('Preview ready');
+    }catch(err){
+      lastPreview = null;
+      $('#preview').innerHTML = '<div class="hint">Invalid code.</div>';
+      $('#diff-box').innerHTML = '<div class="hint">No diff.</div>';
+      renderTrust({score:0,notes:['Parse failed']});
+    }
+  });
+
+  $('#btn-merge').addEventListener('click', async()=>{
+    if(!lastPreview){ toast('Preview first'); return; }
+    const res = await mergePayload(lastPreview);
+    await refresh();
+    renderDiff(lastPreview); // post-merge view
+    toast(`Merged: ${res.upserted.length} plans${res.conflicts.length? ' • conflicts '+res.conflicts.length:''}`);
+  });
+
+  $('#btn-apply-flag').addEventListener('click', async()=>{
+    const id = $('#mod-id').value.trim();
+    const flag = $('#mod-flag').value;
+    const note = $('#mod-note').value.trim();
+    if(!id){ toast('Plan ID required'); return; }
+    try{
+      const flags = await setFlag(id, flag, note);
+      toast(`Flag applied (${flags.length} total)`);
+    }catch(e){ toast(e.message); }
+  });
+  $('#btn-clear-flag').addEventListener('click', async()=>{
+    const id = $('#mod-id').value.trim();
+    if(!id){ toast('Plan ID required'); return; }
+    try{
+      const flags = await setFlag(id, 'none', null);
+      toast('Flags cleared');
+    }catch(e){ toast(e.message); }
+  });
+
+  $('#btn-toggle-chat').addEventListener('click', ()=>{
+    const box = $('#chat-box'); box.style.display = (box.style.display==='block')?'none':'block';
+  });
+
+  window.addEventListener('DOMContentLoaded', async()=>{
+    await refresh();
+    // Optional: register a simple Service Worker for offline caching
+    if('serviceWorker' in navigator){
+      try { navigator.serviceWorker.register('./pra-collab-sw.js'); } catch(_) {}
+    }
+  }, { once:true });
+
+  </script>
+
+  <!-- [sw/notes] service worker file is optional; fallback if not present -->
+  <!--
+    <!-- [pra-collab-sw.js descriptor] -->
+    // Cache this page and TLK origin fallback shell; keep cache minimal to avoid stale data.
+    // Place a file named 'pra-collab-sw.js' beside this HTML with content:
+    //
+    // self.addEventListener('install', e=>{
+    //   e.waitUntil(caches.open('pra-collab-v1').then(c=>c.addAll(['./index.collab.html'])));
+    // });
+    // self.addEventListener('fetch', e=>{
+    //   const url = new URL(e.request.url);
+    //   // network-first for TLK and dynamic; cache-first for this file
+    //   if(url.pathname.endsWith('index.collab.html')){
+    //     e.respondWith(caches.match(e.request).then(r=>r || fetch(e.request)));
+    //   }
+    // });
+  -->
+
+  <!--
+    [sections/future-expansion]
+    - [share/compress]: add optional compression (e.g., DEFLATE) before base64url
+    - [trust/receipts]: allow exporter to attach detached signatures (PGP/Ed25519)
+    - [merge/policies]: pluggable policies (majority-wins, score-weighted)
+    - [flags/mod]: shared revocation lists and curator keys
+    - [sync/p2p]: WebRTC data channels for LAN sync with rendezvous hints
+  -->
+</body>
+</html>

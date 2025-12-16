@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- [meta/head] Analytics & Dossiers layer for the Mycelial Strategy Bank -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Mycelial Strategy Bank — Analytics & Dossiers</title>
+  <meta name="description" content="Evidence scoring, replication metrics, heatmaps, leaderboards, and auto-generated Master/Grandmaster dossiers for PRA Strategy Bank." />
+  <style>
+    :root{
+      --bg:#0a0d11; --card:#10151b; --ink:#eaf3ff; --muted:#9fb0c2;
+      --brand:#67f0b2; --accent:#8bb0ff; --warn:#ffd166; --danger:#ff6b6b; --ok:#7ae582; --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+    header{position:sticky;top:0;z-index:8;background:linear-gradient(180deg,rgba(7,10,14,.9),rgba(7,10,14,.6));backdrop-filter:blur(6px);border-bottom:1px solid #1a2330}
+    .wrap{max-width:1220px;margin:0 auto;padding:18px 16px}
+    h1{margin:0;font-weight:800;letter-spacing:.2px}
+    .sub{color:var(--muted);margin-top:6px}
+    .grid{display:grid;grid-template-columns:1.15fr 1fr;gap:16px}
+    @media (max-width:980px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--card);border:1px solid #1a2330;border-radius:var(--radius);padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .muted{color:var(--muted)}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .pill{padding:2px 8px;border-radius:999px;border:1px solid #253241;color:var(--muted);font-size:12px}
+    label{display:block;font-weight:650;margin:10px 0 6px}
+    input,textarea,select{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #24313c;background:#0d1318;color:var(--ink);font:inherit}
+    textarea{min-height:90px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid #273340;background:#0c1217;color:var(--ink);border-radius:12px;cursor:pointer}
+    .btn:hover{background:#101821}
+    .btn.brand{border-color:#1b3d31;background:#0b1411;color:#dcffef}
+    .btn.warn{border-color:#3b341f;background:#17140b;color:#fff0c9}
+    .btn.ghost{background:transparent}
+    .list{display:grid;gap:10px}
+    .item{padding:12px;border-radius:14px;border:1px solid #21303c;background:#0e1419}
+    .item h4{margin:0 0 4px}
+    .badge{font-size:11px;border:1px solid #2a3541;border-radius:999px;padding:2px 6px;color:#9ab6cf}
+    .fingerprint{font-family:ui-monospace,Menlo,Consolas,monospace;word-break:break-all;font-size:12px;color:#93a4b6}
+    .divider{height:1px;background:#1a2330;margin:12px 0}
+    canvas{width:100%;height:260px;display:block;background:#0b1015;border:1px solid #1a2330;border-radius:12px}
+    table{width:100%;border-collapse:collapse;font-size:.95rem}
+    th,td{padding:8px;border-bottom:1px solid #1a2330;text-align:left}
+    th{color:#bcd0e6;font-weight:700}
+    .good{color:var(--ok)} .mid{color:var(--warn)} .bad{color:var(--danger)}
+    footer{margin-top:28px;padding:18px 0 36px;color:var(--muted)}
+    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:#0e151b;border:1px solid #25313c;color:#eaf3ff;padding:10px 14px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:50;display:none}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Mycelial Strategy Bank <span class="pill">Analytics & Dossiers</span></h1>
+      <div class="sub">Tune thresholds • See what wins • One-click Master/Grandmaster dossiers for publication.</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <!-- [left] Metrics, Heatmaps, Thresholds -->
+      <section class="card">
+        <h2>Evidence Analytics</h2>
+        <div class="row">
+          <span class="pill" id="identity-pill">identity: …</span>
+          <button class="btn brand" id="btn-refresh">Refresh</button>
+          <button class="btn" id="btn-rehash">Rehash Bank</button>
+        </div>
+
+        <div class="divider"></div>
+        <h3>Thresholds</h3>
+        <div class="row">
+          <label style="flex:1">Replications ≥
+            <input id="thr-rep" type="number" min="1" value="5" />
+          </label>
+          <label style="flex:1">Success Ratio ≥
+            <input id="thr-sr" type="number" min="0" max="1" step="0.05" value="0.8" />
+          </label>
+          <button class="btn" id="btn-apply-thr">Apply</button>
+        </div>
+        <div class="muted" style="margin-top:6px">These thresholds recommend promotion to <strong>Master</strong>. Grandmaster suggestions use stricter gates (see below).</div>
+
+        <div class="divider"></div>
+        <h3>Replication Over Time</h3>
+        <canvas id="replicationChart" width="900" height="260" aria-label="Replication over time"></canvas>
+
+        <div class="divider"></div>
+        <h3>Success / Fail Heatmap</h3>
+        <canvas id="heatmap" width="900" height="260" aria-label="Heatmap"></canvas>
+      </section>
+
+      <!-- [right] Leaderboards & Dossiers -->
+      <section class="card">
+        <h2>Leaders & Dossiers</h2>
+
+        <div class="item">
+          <h4>Leaderboards</h4>
+          <div class="muted">Sorted by replication, success ratio, and velocity (replications/day).</div>
+          <div class="divider"></div>
+          <table id="tbl-leaders">
+            <thead>
+              <tr><th>Plan</th><th>Status</th><th>Replications</th><th>Success%</th><th>Velocity</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="item" style="margin-top:10px">
+          <h4>Promotion Suggestions</h4>
+          <div class="muted">Based on current thresholds and evidence cadence.</div>
+          <div class="divider"></div>
+          <div id="suggestions" class="list"></div>
+        </div>
+
+        <div class="item" style="margin-top:10px">
+          <h4>Generate Dossier</h4>
+          <label>Plan ID</label>
+          <input id="dos-id" placeholder="plan_xxx…" />
+          <div class="row" style="margin-top:8px">
+            <button class="btn" id="btn-dossier-md">Export Markdown</button>
+            <button class="btn" id="btn-dossier-json">Export JSON</button>
+          </div>
+          <div class="muted" style="margin-top:6px">Dossiers include heartbeat, distilled actions, evidence summary, replication map, and attribution chain.</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="item">
+          <h4>Local Bank Fingerprint</h4>
+          <div class="fingerprint" id="fp-local">…</div>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      <div class="muted">
+        Attribution: <strong>Ricky Foster + Navi</strong> — Planetary Restoration Archive. 
+        “If this moved you, let it move through you.” — PRA
+      </div>
+    </footer>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+  /* ==========================================================
+     DB + Utils (shared schema)
+     ========================================================== */
+  const DB_NAME='PRA_StrategyBank', DB_VER=1;
+  const STORES={plans:'plans',evidence:'evidence',merges:'merges',profiles:'profiles',votes:'votes'};
+  const $=s=>document.querySelector(s);
+  const nowISO=()=>new Date().toISOString();
+
+  function openDB(){
+    return new Promise((resolve,reject)=>{
+      const r=indexedDB.open(DB_NAME,DB_VER);
+      r.onupgradeneeded=()=>{const db=r.result;
+        if(!db.objectStoreNames.contains('plans')){const s=db.createObjectStore('plans',{keyPath:'id'});s.createIndex('by_status','status');s.createIndex('by_updated','updatedAt');}
+        if(!db.objectStoreNames.contains('evidence')){const s=db.createObjectStore('evidence',{keyPath:'id'});s.createIndex('by_plan','planId');}
+        if(!db.objectStoreNames.contains('merges')) db.createObjectStore('merges',{keyPath:'id'});
+        if(!db.objectStoreNames.contains('profiles')) db.createObjectStore('profiles',{keyPath:'id'});
+        if(!db.objectStoreNames.contains('votes')) db.createObjectStore('votes',{keyPath:'id'});
+      };
+      r.onsuccess=()=>resolve(r.result); r.onerror=()=>reject(r.error);
+    });
+  }
+  async function dbAll(store){const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(store,'readonly');const os=tx.objectStore(store);const req=os.getAll();req.onsuccess=()=>res(req.result||[]);req.onerror=()=>rej(req.error);});}
+  async function dbGet(store,key){const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(store,'readonly');const os=tx.objectStore(store);const req=os.get(key);req.onsuccess=()=>res(req.result||null);req.onerror=()=>rej(req.error);});}
+  async function sha256Hex(str){const enc=new TextEncoder();const buf=await crypto.subtle.digest('SHA-256',enc.encode(str));return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');}
+  async function identity(){let me=await dbGet('profiles','me');if(!me){const mnemonic='local-anonymous-seed';const pubId=(await sha256Hex(mnemonic)).slice(0,16);me={id:'me',mnemonic,pubId};}$('#identity-pill').textContent=`identity: ${me.pubId}`;return me;}
+  async function localFingerprint(){const payload={plans:await dbAll('plans'),evidence:await dbAll('evidence'),merges:await dbAll('merges')};payload.plans.sort((a,b)=>a.id.localeCompare(b.id));payload.evidence.sort((a,b)=>a.id.localeCompare(b.id));payload.merges.sort((a,b)=>a.id.localeCompare(b.id));return sha256Hex(JSON.stringify(payload));}
+  function toast(msg,ms=2000){const t=$('#toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',ms);}
+
+  /* ==========================================================
+     Analytics helpers
+     ========================================================== */
+  function dayKey(iso){const d=new Date(iso);return new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())).toISOString().slice(0,10);}
+  function ratio(p){const rep=p.metrics?.replications||0;const succ=p.metrics?.success||0;return rep?succ/rep:0;}
+  function velocity(p){ // reps per day since first evidence
+    const rep=p.metrics?.replications||0; if(!rep) return 0;
+    return rep/Math.max(1,ageDays(p));
+  }
+  function ageDays(p){
+    // approximate age from earliest evidence; fallback to plan.createdAt
+    const first = window.__evIndex?.get(p.id)?.firstAt || p.createdAt || nowISO();
+    const ms=Date.now()-Date.parse(first||Date.now()); return Math.max(1,Math.round(ms/86400000));
+  }
+
+  function drawLineChart(canvas, series, yMaxHint){
+    const ctx=canvas.getContext('2d');
+    const W=canvas.width,H=canvas.height;
+    ctx.clearRect(0,0,W,H);
+    // axes
+    ctx.strokeStyle='#1a2330'; ctx.lineWidth=1; ctx.beginPath();
+    ctx.moveTo(40,H-28); ctx.lineTo(W-10,H-28); ctx.moveTo(40,12); ctx.lineTo(40,H-28); ctx.stroke();
+    // data bounds
+    const xs=series.map(s=>s.x), ys=series.map(s=>s.y);
+    const minX=Math.min(...xs), maxX=Math.max(...xs);
+    const minY=0, maxY=Math.max(yMaxHint||0, Math.max(...ys,1));
+    function X(v){return 40 + (W-50)*( (v-minX)/Math.max(1,(maxX-minX||1)) );}
+    function Y(v){return (H-28) - (H-40)*( (v-minY)/Math.max(1,(maxY-minY)) );}
+    // grid
+    ctx.strokeStyle='#18222e'; ctx.lineWidth=1; ctx.setLineDash([3,4]);
+    for(let i=0;i<5;i++){const y=minY+(i*(maxY-minY)/4); ctx.beginPath(); ctx.moveTo(40,Y(y)); ctx.lineTo(W-10,Y(y)); ctx.stroke();}
+    ctx.setLineDash([]);
+
+    // line
+    ctx.strokeStyle='#8bb0ff'; ctx.lineWidth=2; ctx.beginPath();
+    series.sort((a,b)=>a.x-b.x).forEach((pt,i)=>{ if(i===0) ctx.moveTo(X(pt.x),Y(pt.y)); else ctx.lineTo(X(pt.x),Y(pt.y)); });
+    ctx.stroke();
+
+    // points
+    ctx.fillStyle='#67f0b2';
+    series.forEach(pt=>{ ctx.beginPath(); ctx.arc(X(pt.x),Y(pt.y),2.5,0,Math.PI*2); ctx.fill(); });
+  }
+
+  function drawHeatmap(canvas, matrix, rows, cols){
+    const ctx=canvas.getContext('2d'); const W=canvas.width,H=canvas.height;
+    ctx.clearRect(0,0,W,H);
+    const pad=30, cw=(W-pad-10)/cols, rh=(H-pad-10)/rows;
+    // axes
+    ctx.strokeStyle='#1a2330'; ctx.strokeRect(pad,10,cw*cols,rh*rows);
+    // color scale
+    function col(v){ // v in 0..1
+      const r=Math.round(255*v), g=Math.round(255*(1-v)), b=60; return `rgb(${r},${g},${b})`;
+    }
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        const v=matrix[r][c];
+        ctx.fillStyle=col(v);
+        ctx.fillRect(pad+c*cw,10+r*rh,cw-1,rh-1);
+      }
+    }
+    // legend
+    ctx.fillStyle='#9fb0c2'; ctx.font='12px ui-monospace, monospace';
+    ctx.fillText('low', pad, H-12); ctx.fillText('high', pad+80, H-12);
+  }
+
+  /* ==========================================================
+     Load, compute analytics
+     ========================================================== */
+  let THR_REP=5, THR_SR=0.8;
+
+  async function buildEvidenceIndex(){
+    const ev=await dbAll('evidence');
+    const map=new Map();
+    for(const e of ev){
+      const entry=map.get(e.planId)||{firstAt:e.at,lastAt:e.at,byDay:{},succ:0,fail:0,neu:0};
+      entry.firstAt = entry.firstAt && Date.parse(entry.firstAt) < Date.parse(e.at) ? entry.firstAt : e.at;
+      entry.lastAt  = entry.lastAt  && Date.parse(entry.lastAt)  > Date.parse(e.at) ? entry.lastAt  : e.at;
+      const k=dayKey(e.at); entry.byDay[k]=(entry.byDay[k]||0)+((e.kind==='success'||e.kind==='fail')?1:0);
+      if(e.kind==='success') entry.succ++; else if(e.kind==='fail') entry.fail++; else entry.neu++;
+      map.set(e.planId,entry);
+    }
+    window.__evIndex=map; // for ageDays()
+    return map;
+  }
+
+  function leaders(plans){
+    const sorted=[...plans].sort((a,b)=>{
+      const ra=(a.metrics?.replications||0), rb=(b.metrics?.replications||0);
+      const va=velocity(a), vb=velocity(b);
+      const sa=ratio(a), sb=ratio(b);
+      // weighted sort: reps (0.5), success (0.3), velocity (0.2)
+      const wa=ra*0.5+sa*100*0.3+va*50*0.2;
+      const wb=rb*0.5+sb*100*0.3+vb*50*0.2;
+      return wb-wa;
+    });
+    return sorted.slice(0,20);
+  }
+
+  function suggestions(plans){
+    const out=[];
+    for(const p of plans){
+      const rep=p.metrics?.replications||0;
+      const sr = ratio(p);
+      // Recommend Master if below Master but meets thresholds
+      if((p.status==='seed'||p.status==='sprout'||p.status==='root') && rep>=THR_REP && sr>=THR_SR){
+        out.push({level:'Master',plan:p,why:`replications ≥ ${THR_REP}, success≥${(THR_SR*100).toFixed(0)}%`});
+      }
+      // Recommend Grandmaster if Master with higher gates
+      if(p.status==='master' && rep>=Math.ceil(THR_REP*2) && sr>=Math.min(0.95, THR_SR+0.1)){
+        out.push({level:'Grandmaster',plan:p,why:`replications ≥ ${Math.ceil(THR_REP*2)}, success≥${Math.min(95,(THR_SR+0.1)*100).toFixed(0)}%`});
+      }
+    }
+    return out.sort((a,b)=> (b.plan.metrics.replications||0) - (a.plan.metrics.replications||0));
+  }
+
+  async function render(){
+    await identity();
+    $('#fp-local').textContent=await localFingerprint();
+
+    const plans=await dbAll('plans');
+    const evIndex=await buildEvidenceIndex();
+
+    // Replication over time (aggregate per day)
+    const dayCounts={}; let minT=Infinity,maxT=-Infinity;
+    for(const [pid,idx] of evIndex.entries()){
+      for(const [day,count] of Object.entries(idx.byDay)){
+        dayCounts[day]=(dayCounts[day]||0)+count;
+        const t=Date.parse(day); if(t<minT) minT=t; if(t>maxT) maxT=t;
+      }
+    }
+    const series=[];
+    if(Number.isFinite(minT) && Number.isFinite(maxT)){
+      for(let t=minT;t<=maxT;t+=86400000){
+        const day=new Date(t).toISOString().slice(0,10);
+        series.push({x:t,y:dayCounts[day]||0});
+      }
+    }
+    drawLineChart($('#replicationChart'), series, Math.max(...series.map(s=>s.y),10));
+
+    // Heatmap (success vs fail per plan bucket)
+    // Bucket plans by ratio into 10 columns, velocity into 5 rows
+    const rows=5, cols=10;
+    const matrix=Array.from({length:rows},()=>Array.from({length:cols},()=>0));
+    const counts=Array.from({length:rows},()=>Array.from({length:cols},()=>0));
+    for(const p of plans){
+      const r=Math.min(rows-1, Math.floor(velocity(p)*2)); // clip
+      const c=Math.min(cols-1, Math.floor(ratio(p)*cols));
+      const weight=(p.metrics?.replications||0);
+      matrix[r][c]+=weight; counts[r][c]+=1;
+    }
+    // normalize 0..1
+    let maxCell=0; for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) maxCell=Math.max(maxCell,matrix[r][c]);
+    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) matrix[r][c]= maxCell? (matrix[r][c]/maxCell):0;
+    drawHeatmap($('#heatmap'), matrix, rows, cols);
+
+    // Leaderboard
+    const top=leaders(plans);
+    const tb=$('#tbl-leaders tbody'); tb.innerHTML='';
+    for(const p of top){
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td title="${p.id}">${escapeHTML(p.title||'—')}</td>
+        <td>${escapeHTML(p.status||'seed')}</td>
+        <td>${p.metrics?.replications||0}</td>
+        <td>${((ratio(p))*100||0).toFixed(0)}%</td>
+        <td>${velocity(p).toFixed(2)}/d</td>`;
+      tb.appendChild(tr);
+    }
+
+    // Suggestions
+    const sugg=suggestions(plans);
+    const box=$('#suggestions'); box.innerHTML='';
+    if(!sugg.length){ box.innerHTML='<div class="muted">No suggestions under current thresholds.</div>'; }
+    else{
+      for(const s of sugg){
+        const div=document.createElement('div'); div.className='item';
+        const rep=s.plan.metrics?.replications||0, sr=((ratio(s.plan))*100).toFixed(0);
+        div.innerHTML=`
+          <h4>${escapeHTML(s.plan.title||'—')}</h4>
+          <div class="muted">ID: <code>${s.plan.id}</code> • status: ${escapeHTML(s.plan.status)} • reps ${rep} • success ${sr}%</div>
+          <div class="row" style="margin-top:6px">
+            <span class="badge">Recommend: ${s.level}</span>
+            <span class="badge">Why: ${escapeHTML(s.why)}</span>
+          </div>`;
+        box.appendChild(div);
+      }
+    }
+  }
+
+  function escapeHTML(s){return (s||'').toString().replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;' }[c]));}
+
+  /* ==========================================================
+     Dossiers
+     ========================================================== */
+  function planEvidenceSummary(plan, evIndex){
+    const idx=evIndex.get(plan.id)||{succ:0,fail:0,neu:0,firstAt:plan.createdAt,lastAt:plan.updatedAt};
+    const rep=plan.metrics?.replications||0;
+    const sr=rep? (plan.metrics.success||0)/rep : 0;
+    const windowDays=Math.max(1, Math.round((Date.parse(idx.lastAt)-Date.parse(idx.firstAt))/86400000));
+    return {rep, sr, succ:idx.succ||0, fail:idx.fail||0, neu:idx.neu||0, firstAt:idx.firstAt, lastAt:idx.lastAt, windowDays};
+  }
+
+  async function exportDossierMarkdown(planId){
+    const plans=await dbAll('plans');
+    const plan=plans.find(p=>p.id===planId);
+    if(!plan){toast('Unknown Plan ID');return;}
+    const evIndex=await buildEvidenceIndex();
+    const sum=planEvidenceSummary(plan, evIndex);
+    const author=plan.author||'unknown';
+    const title=plan.title||'Untitled';
+    const tags=(plan.tags||[]).map(t=>`#${t}`).join(' ');
+
+    const md=`
+# ${title}
+**Status:** ${plan.status} • **ID:** \`${plan.id}\` • **Author:** \`${author}\`  
+**Tags:** ${tags}
+
+## Heartbeat
+${plan.heartbeat||''}
+
+## Distilled Actions
+\`\`\`
+${plan.actions||''}
+\`\`\`
+
+## Proof Plan
+${plan.proof||''}
+
+## Evidence Summary
+- Replications: **${sum.rep}**
+- Success: **${(sum.sr*100).toFixed(0)}%** (succ: ${sum.succ}, fail: ${sum.fail}, neutral: ${sum.neu})
+- Window: ${sum.windowDays} days (from ${sum.firstAt || '—'} to ${sum.lastAt || '—'})
+
+## Recommendation
+${recommendationText(plan)}
+
+## Attribution
+Ricky Foster + Navi — Planetary Restoration Archive  
+“If this moved you, let it move through you.”
+
+    `.trim();
+
+    const blob=new Blob([md],{type:'text/markdown'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download=`dossier_${planId}.md`; document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  function recommendationText(plan){
+    const rep=plan.metrics?.replications||0; const sr=ratio(plan);
+    if((plan.status==='seed'||plan.status==='sprout'||plan.status==='root') && rep>=THR_REP && sr>=THR_SR){
+      return `Recommend promotion to **Master** (replications ≥ ${THR_REP}, success ≥ ${(THR_SR*100).toFixed(0)}%).`;
+    }
+    if(plan.status==='master' && rep>=Math.ceil(THR_REP*2) && sr>=Math.min(0.95, THR_SR+0.1)){
+      return `Recommend promotion to **Grandmaster** (replications ≥ ${Math.ceil(THR_REP*2)}, success ≥ ${Math.min(95,(THR_SR+0.1)*100).toFixed(0)}%).`;
+    }
+    return `Hold at current status; gather more evidence.`;
+  }
+
+  async function exportDossierJSON(planId){
+    const plans=await dbAll('plans'); const plan=plans.find(p=>p.id===planId);
+    if(!plan){toast('Unknown Plan ID');return;}
+    const ev=await dbAll('evidence'); const evFor=ev.filter(e=>e.planId===planId);
+    const merges=await dbAll('merges'); const merge = plan.mergeRef ? merges.find(m=>m.id===plan.mergeRef) : null;
+    const out={ version:1, generatedAt:nowISO(), plan, evidence:evFor, merge, fingerprint: await localFingerprint() };
+    const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download=`dossier_${planId}.json`; document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  /* ==========================================================
+     Events
+     ========================================================== */
+  $('#btn-refresh').addEventListener('click', async()=>{ await render(); toast('Analytics refreshed'); });
+  $('#btn-rehash').addEventListener('click', async()=>{ $('#fp-local').textContent = await localFingerprint(); toast('Fingerprint recalculated'); });
+  $('#btn-apply-thr').addEventListener('click', ()=>{ 
+    const r=parseInt($('#thr-rep').value,10); const s=parseFloat($('#thr-sr').value);
+    if(Number.isFinite(r)&&r>0) THR_REP=r; if(Number.isFinite(s)&&s>=0&&s<=1) THR_SR=s;
+    render(); toast('Thresholds applied'); 
+  });
+  $('#btn-dossier-md').addEventListener('click', ()=>{ const id=$('#dos-id').value.trim(); if(id) exportDossierMarkdown(id); else toast('Enter Plan ID'); });
+  $('#btn-dossier-json').addEventListener('click', ()=>{ const id=$('#dos-id').value.trim(); if(id) exportDossierJSON(id); else toast('Enter Plan ID'); });
+
+  window.addEventListener('DOMContentLoaded', ()=>{ identity().then(render); }, {once:true});
+  </script>
+
+  <!--
+    [sections/future-expansion]
+    - [viz/export] embed tiny SVG sparkline snapshots into Markdown dossiers
+    - [scoring] add Bayesian update for success ratio robustness at low n
+    - [privacy] optional redaction profiles for public vs. curator dossiers
+    - [alerts] local notifications when a plan crosses thresholds
+    - [p2p] subscribe to Part 2 share-code streams and live-update analytics
+  -->
+</body>
+</html>

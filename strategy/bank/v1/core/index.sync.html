@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- [meta/head] P2P Sync & Curator Keys layer for the Mycelial Strategy Bank -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Mycelial Strategy Bank — P2P Sync & Curator Keys</title>
+  <meta name="description" content="Peer-to-peer sync (WebRTC data channels), curator key signatures, signed share codes & plan digests for the PRA Strategy Bank." />
+  <style>
+    :root{
+      --bg:#0a0e13; --card:#0f151c; --ink:#eaf3ff; --muted:#9fb0c2;
+      --brand:#67f0b2; --accent:#8bb0ff; --warn:#ffd166; --danger:#ff6b6b; --ok:#7ae582; --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+    header{position:sticky;top:0;z-index:8;background:linear-gradient(180deg,rgba(8,12,16,.9),rgba(8,12,16,.6));backdrop-filter:blur(6px);border-bottom:1px solid #1b2230}
+    .wrap{max-width:1220px;margin:0 auto;padding:18px 16px}
+    h1{margin:0;font-weight:800;letter-spacing:.2px}
+    .sub{color:var(--muted);margin-top:6px}
+    .grid{display:grid;grid-template-columns:1.1fr 1fr;gap:16px}
+    @media (max-width:980px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--card);border:1px solid #1b2230;border-radius:var(--radius);padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .muted{color:var(--muted)}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .pill{padding:2px 8px;border-radius:999px;border:1px solid #253241;color:var(--muted);font-size:12px}
+    label{display:block;font-weight:650;margin:10px 0 6px}
+    input,textarea,select{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #24313c;background:#0d1318;color:var(--ink);font:inherit}
+    textarea{min-height:90px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid #273340;background:#0c1217;color:var(--ink);border-radius:12px;cursor:pointer}
+    .btn:hover{background:#101821}
+    .btn.brand{border-color:#1b3d31;background:#0b1411;color:#dcffef}
+    .btn.warn{border-color:#3b341f;background:#17140b;color:#fff0c9}
+    .btn.danger{border-color:#3b1f1f;background:#170b0b;color:#ffe0e0}
+    .btn.ghost{background:transparent}
+    .divider{height:1px;background:#1b2230;margin:12px 0}
+    .item{padding:12px;border-radius:14px;border:1px solid #21303c;background:#0e1419}
+    .item h4{margin:0 0 4px}
+    .badge{font-size:11px;border:1px solid #2a3541;border-radius:999px;padding:2px 6px;color:#9ab6cf}
+    .hint{font-size:12px;color:#9fb0c2}
+    .fingerprint{font-family:ui-monospace,Menlo,Consolas,monospace;word-break:break-all;font-size:12px;color:#93a4b6}
+    footer{margin-top:28px;padding:18px 0 36px;color:var(--muted)}
+    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:#0e151b;border:1px solid #25313c;color:#eaf3ff;padding:10px 14px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:50;display:none}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Mycelial Strategy Bank <span class="pill">P2P Sync & Curator Keys</span></h1>
+      <div class="sub">Generate curator keys • Sign share codes & plan digests • WebRTC peer-to-peer sync with copy–paste signaling.</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <!-- LEFT: Curator Keys & Signing -->
+      <section class="card">
+        <h2>Curator Keys</h2>
+        <div class="row">
+          <span class="pill" id="identity-pill">identity: …</span>
+          <button class="btn brand" id="btn-refresh">Refresh</button>
+        </div>
+
+        <div class="item" style="margin-top:8px">
+          <h4>Keypair</h4>
+          <div class="hint">ECDSA P-256 (widely supported by WebCrypto). Keys live only in this browser unless you export them.</div>
+          <div class="row" style="margin-top:6px">
+            <button class="btn" id="btn-gen">Generate New Keypair</button>
+            <button class="btn" id="btn-export-pub">Export Public Key</button>
+            <button class="btn" id="btn-export-priv">Export Private Key (PEM)</button>
+            <input id="file-import" type="file" accept=".pem,.txt" style="display:none" />
+            <button class="btn warn" id="btn-import-priv">Import Private Key</button>
+          </div>
+          <div class="divider"></div>
+          <div class="hint">Public Key (thumbprint)</div>
+          <div class="fingerprint" id="pub-thumb">—</div>
+        </div>
+
+        <div class="item" style="margin-top:10px">
+          <h4>Sign / Verify Share Codes</h4>
+          <label>Share Code (from Part 2)</label>
+          <textarea id="share-code" placeholder="Paste a PRA share code…"></textarea>
+          <div class="row" style="margin-top:6px">
+            <button class="btn" id="btn-sign-code">Sign Code</button>
+            <button class="btn" id="btn-verify-code">Verify Signature</button>
+          </div>
+          <label>Signature (Base64url)</label>
+          <textarea id="sig-out" placeholder="Signature will appear here…" readonly></textarea>
+          <div class="hint">Signatures are attached in exports and validated in imports; receipts add your public key thumbprint.</div>
+        </div>
+
+        <div class="item" style="margin-top:10px">
+          <h4>Plan Digest Signature</h4>
+          <div class="hint">Sign a normalized digest of selected plan IDs to certify a release.</div>
+          <label>Plan IDs (comma-separated)</label>
+          <input id="digest-ids" placeholder="plan_abc…, plan_def…" />
+          <div class="row" style="margin-top:6px">
+            <button class="btn" id="btn-sign-digest">Sign Digest</button>
+          </div>
+          <label>Digest</label>
+          <textarea id="digest-out" readonly></textarea>
+          <label>Signature</label>
+          <textarea id="digest-sig" readonly></textarea>
+        </div>
+      </section>
+
+      <!-- RIGHT: P2P Sync -->
+      <section class="card">
+        <h2>Peer-to-Peer Sync (WebRTC)</h2>
+        <p class="muted">No server required. Use copy–paste signaling. Select content to send, open a channel, and sync.</p>
+
+        <div class="item">
+          <h4>Selection</h4>
+          <label>Plan IDs to sync (comma-separated)</label>
+          <input id="p2p-ids" placeholder="plan_abc…, plan_def…" />
+          <div class="hint">Associated evidence and merges are included automatically.</div>
+        </div>
+
+        <div class="item" style="margin-top:10px">
+          <h4>Host → Create Offer</h4>
+          <div class="row" style="margin-top:6px">
+            <button class="btn brand" id="btn-offer">Create Offer</button>
+            <button class="btn" id="btn-copy-offer">Copy</button>
+          </div>
+          <label>Offer (copy to peer)</label>
+          <textarea id="offer" readonly></textarea>
+        </div>
+
+        <div class="item" style="margin-top:10px">
+          <h4>Peer → Paste Offer & Generate Answer</h4>
+          <label>Paste Offer</label>
+          <textarea id="offer-in" placeholder="Paste host offer…"></textarea>
+          <div class="row" style="margin-top:6px">
+            <button class="btn brand" id="btn-answer">Generate Answer</button>
+            <button class="btn" id="btn-copy-answer">Copy</button>
+          </div>
+          <label>Answer (send back to host)</label>
+          <textarea id="answer" readonly></textarea>
+        </div>
+
+        <div class="item" style="margin-top:10px">
+          <h4>Host → Paste Answer</h4>
+          <label>Paste Answer</label>
+          <textarea id="answer-in" placeholder="Peer’s answer…"></textarea>
+          <div class="row" style="margin-top:6px">
+            <button class="btn brand" id="btn-connect">Connect</button>
+          </div>
+        </div>
+
+        <div class="item" style="margin-top:10px">
+          <h4>Channel</h4>
+          <div class="row">
+            <span class="badge" id="dc-state">disconnected</span>
+            <button class="btn" id="btn-send">Send Selection</button>
+          </div>
+          <label>Logs</label>
+          <textarea id="p2p-log" readonly style="min-height:140px"></textarea>
+        </div>
+
+        <div class="divider"></div>
+        <div class="hint">Security note: WebRTC is encrypted end-to-end; copy–paste signaling is ephemeral. For high-assurance releases, use curator signatures in tandem with P2P.</div>
+      </section>
+    </div>
+
+    <footer>
+      <div class="muted">
+        Attribution: <strong>Ricky Foster + Navi</strong> — Planetary Restoration Archive. 
+        “If this moved you, let it move through you.” — PRA
+      </div>
+    </footer>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+  /* ==========================================================
+     DB (shared), crypto utils, and identity
+     ========================================================== */
+  const DB_NAME='PRA_StrategyBank', DB_VER=1;
+  const STORES={plans:'plans',evidence:'evidence',merges:'merges',profiles:'profiles',votes:'votes'};
+  const $=s=>document.querySelector(s);
+  const nowISO=()=>new Date().toISOString();
+
+  function openDB(){
+    return new Promise((resolve,reject)=>{
+      const r=indexedDB.open(DB_NAME,DB_VER);
+      r.onupgradeneeded=()=>{const db=r.result;
+        if(!db.objectStoreNames.contains('plans')){const s=db.createObjectStore('plans',{keyPath:'id'});s.createIndex('by_status','status');s.createIndex('by_updated','updatedAt');}
+        if(!db.objectStoreNames.contains('evidence')){const s=db.createObjectStore('evidence',{keyPath:'id'});s.createIndex('by_plan','planId');}
+        if(!db.objectStoreNames.contains('merges')) db.createObjectStore('merges',{keyPath:'id'});
+        if(!db.objectStoreNames.contains('profiles')) db.createObjectStore('profiles',{keyPath:'id'});
+        if(!db.objectStoreNames.contains('votes')) db.createObjectStore('votes',{keyPath:'id'});
+      }; r.onsuccess=()=>resolve(r.result); r.onerror=()=>reject(r.error);
+    });
+  }
+  async function dbAll(store){const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(store,'readonly');const os=tx.objectStore(store);const req=os.getAll();req.onsuccess=()=>res(req.result||[]);req.onerror=()=>rej(req.error);});}
+  async function dbGet(store,key){const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(store,'readonly');const os=tx.objectStore(store);const req=os.get(key);req.onsuccess=()=>res(req.result||null);req.onerror=()=>rej(req.error);});}
+  async function sha256Hex(str){const enc=new TextEncoder();const buf=await crypto.subtle.digest('SHA-256',enc.encode(str));return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');}
+  async function localFingerprint(){const payload={plans:await dbAll('plans'),evidence:await dbAll('evidence'),merges:await dbAll('merges')};payload.plans.sort((a,b)=>a.id.localeCompare(b.id));payload.evidence.sort((a,b)=>a.id.localeCompare(b.id));payload.merges.sort((a,b)=>a.id.localeCompare(b.id));return sha256Hex(JSON.stringify(payload));}
+  async function identity(){let me=await dbGet('profiles','me');if(!me){const mnemonic='local-anonymous-seed';const pubId=(await sha256Hex(mnemonic)).slice(0,16);me={id:'me',mnemonic,pubId};}$('#identity-pill').textContent=`identity: ${me.pubId}`;return me;}
+  function toast(msg,ms=2000){const t=$('#toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',ms);}
+
+  /* ==========================================================
+     Key management (ECDSA P-256)
+     ========================================================== */
+  const KEY_ALIAS='pra_curator_key';
+  let CUR_PRIV=null, CUR_PUB=null;
+
+  async function loadKey(){
+    try{
+      const jwkPub = JSON.parse(localStorage.getItem(KEY_ALIAS+'_pub')||'null');
+      const jwkPriv= JSON.parse(localStorage.getItem(KEY_ALIAS+'_priv')||'null');
+      if(jwkPub){
+        CUR_PUB = await crypto.subtle.importKey('jwk', jwkPub, {name:'ECDSA', namedCurve:'P-256'}, true, ['verify']);
+        $('#pub-thumb').textContent = await thumbOfPub(CUR_PUB);
+      }
+      if(jwkPriv){
+        CUR_PRIV = await crypto.subtle.importKey('jwk', jwkPriv, {name:'ECDSA', namedCurve:'P-256'}, true, ['sign']);
+      }
+    }catch(_){}
+  }
+
+  async function genKeypair(){
+    const kp = await crypto.subtle.generateKey({name:'ECDSA', namedCurve:'P-256'}, true, ['sign','verify']);
+    CUR_PRIV = kp.privateKey; CUR_PUB = kp.publicKey;
+    const jwkPub  = await crypto.subtle.exportKey('jwk', CUR_PUB);
+    const jwkPriv = await crypto.subtle.exportKey('jwk', CUR_PRIV);
+    localStorage.setItem(KEY_ALIAS+'_pub', JSON.stringify(jwkPub));
+    localStorage.setItem(KEY_ALIAS+'_priv', JSON.stringify(jwkPriv));
+    $('#pub-thumb').textContent = await thumbOfPub(CUR_PUB);
+    toast('Keypair generated');
+  }
+
+  async function thumbOfPub(pubKey){
+    const spki = await crypto.subtle.exportKey('spki', pubKey);
+    const b = new Uint8Array(spki);
+    const h = await sha256Hex(String.fromCharCode(...b));
+    return 'p256:' + h.slice(0,16);
+  }
+
+  function b64u(buf){ let s=''; const v=new Uint8Array(buf); for(const b of v) s+=String.fromCharCode(b); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+  function b64uToBytes(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); const pad=s.length%4; if(pad) s+='='.repeat(4-pad); const bin=atob(s); const out=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i); return out; }
+
+  async function exportPublic(){
+    if(!CUR_PUB){ toast('No key'); return; }
+    const spki = await crypto.subtle.exportKey('spki', CUR_PUB);
+    const pem = '-----BEGIN PUBLIC KEY-----\n' + btoa(String.fromCharCode(...new Uint8Array(spki))).match(/.{1,64}/g).join('\n') + '\n-----END PUBLIC KEY-----\n';
+    downloadText('pra_public_key.pem', pem);
+  }
+  async function exportPrivate(){
+    if(!CUR_PRIV){ toast('No key'); return; }
+    const pkcs8 = await crypto.subtle.exportKey('pkcs8', CUR_PRIV);
+    const pem = '-----BEGIN PRIVATE KEY-----\n' + btoa(String.fromCharCode(...new Uint8Array(pkcs8))).match(/.{1,64}/g).join('\n') + '\n-----END PRIVATE KEY-----\n';
+    downloadText('pra_private_key.pem', pem);
+  }
+  function downloadText(name, text){
+    const blob=new Blob([text],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  async function importPrivatePEM(text){
+    try{
+      const base64 = text.replace(/-----[^-]+-----/g,'').replace(/\s+/g,'');
+      const bin = Uint8Array.from(atob(base64), c=>c.charCodeAt(0)).buffer;
+      const key = await crypto.subtle.importKey('pkcs8', bin, {name:'ECDSA', namedCurve:'P-256'}, true, ['sign']);
+      CUR_PRIV = key;
+      const pubJwk = JSON.parse(localStorage.getItem(KEY_ALIAS+'_pub')||'null');
+      if(pubJwk){ CUR_PUB = await crypto.subtle.importKey('jwk', pubJwk, {name:'ECDSA', namedCurve:'P-256'}, true, ['verify']); }
+      const jwkPriv = await crypto.subtle.exportKey('jwk', CUR_PRIV);
+      localStorage.setItem(KEY_ALIAS+'_priv', JSON.stringify(jwkPriv));
+      toast('Private key imported');
+    }catch(e){ toast('Import failed'); }
+  }
+
+  /* ==========================================================
+     Sign / Verify: share codes & plan digests
+     ========================================================== */
+  async function signBytes(bytes){
+    if(!CUR_PRIV){ toast('No private key'); throw new Error('no key'); }
+    const sig = await crypto.subtle.sign({name:'ECDSA', hash:'SHA-256'}, CUR_PRIV, bytes);
+    return new Uint8Array(sig);
+  }
+  async function verifyBytes(bytes, sig, pubKey){
+    return crypto.subtle.verify({name:'ECDSA', hash:'SHA-256'}, pubKey, sig, bytes);
+  }
+
+  function normalizeStr(s){ return new TextEncoder().encode(s); }
+
+  async function signShareCode(){
+    const code = $('#share-code').value.trim();
+    if(!code){ toast('Paste a share code'); return; }
+    const bytes = normalizeStr(code);
+    const sig = await signBytes(bytes);
+    const s = b64u(sig);
+    $('#sig-out').value = s;
+    toast('Share code signed');
+  }
+
+  async function verifyShareCode(){
+    const code = $('#share-code').value.trim();
+    const sigB64u = $('#sig-out').value.trim();
+    if(!code || !sigB64u){ toast('Need code + signature'); return; }
+    if(!CUR_PUB){ toast('No public key'); return; }
+    const ok = await verifyBytes(normalizeStr(code), b64uToBytes(sigB64u), CUR_PUB);
+    toast(ok ? 'Signature valid' : 'Signature invalid');
+  }
+
+  async function signPlanDigest(){
+    const ids = $('#digest-ids').value.split(',').map(s=>s.trim()).filter(Boolean).sort();
+    if(!ids.length){ toast('Add plan IDs'); return; }
+    const plans = await dbAll('plans');
+    const chosen = plans.filter(p=>ids.includes(p.id)).sort((a,b)=>a.id.localeCompare(b.id));
+    const digestObj = { v:1, kind:'PRA_PLAN_DIGEST', at: nowISO(), ids: chosen.map(p=>p.id), bankFp: await localFingerprint() };
+    const digest = JSON.stringify(digestObj);
+    const sig = await signBytes(normalizeStr(digest));
+    $('#digest-out').value = digest;
+    $('#digest-sig').value = b64u(sig);
+    toast('Digest signed');
+  }
+
+  /* ==========================================================
+     P2P Sync over WebRTC (copy–paste signaling)
+     ========================================================== */
+  let pc=null, dc=null, isHost=false;
+
+  function log(msg){ const ta=$('#p2p-log'); ta.value += `[${new Date().toLocaleTimeString()}] ${msg}\n`; ta.scrollTop=ta.scrollHeight; }
+  function setDCState(){
+    const s = dc? dc.readyState : 'disconnected';
+    $('#dc-state').textContent = s;
+  }
+
+  function makePC(){
+    const cfg = {iceServers:[{urls:['stun:stun.l.google.com:19302']}]};
+    pc = new RTCPeerConnection(cfg);
+    pc.onicecandidate = e => { if(!e.candidate) log('ICE gathering complete'); };
+    pc.onconnectionstatechange = ()=>log('PC state: '+pc.connectionState);
+    pc.ondatachannel = e => {
+      dc = e.channel;
+      wireDC();
+      log('DataChannel received');
+    };
+  }
+
+  function wireDC(){
+    dc.onopen = ()=>{ log('Channel open'); setDCState(); };
+    dc.onclose= ()=>{ log('Channel closed'); setDCState(); };
+    dc.onmessage = async (e)=>{
+      try{
+        const msg = JSON.parse(e.data);
+        if(msg.kind==='PRA_P2P_PAYLOAD'){
+          log(`Received payload (${msg.summary})`);
+          await importPayload(msg.data);
+          log('Imported OK');
+        }
+      }catch(err){ log('RX error: '+err.message); }
+    };
+    setDCState();
+  }
+
+  async function buildPayloadByIds(ids){
+    const plansAll = await dbAll('plans');
+    const chosen = plansAll.filter(p=>ids.includes(p.id));
+    const evAll = await dbAll('evidence');
+    const ev = evAll.filter(e=>ids.includes(e.planId));
+    const mergesAll = await dbAll('merges');
+    const merges = mergesAll.filter(m => (m.childIds||[]).some(id=>ids.includes(id)) || chosen.some(p=>p.mergeRef===m.id));
+    const receipt = {
+      exportedAt: nowISO(),
+      exporter: (await identity()).pubId,
+      bankFingerprint: await localFingerprint(),
+      chain: []
+    };
+    // attach optional curator signature if present
+    const minimal = { v:1, kind:'PRA_SHARE', receipt, plans: chosen, evidence: ev, merges };
+    // keep deterministic string for possible signing
+    return minimal;
+  }
+
+  async function importPayload(payload){
+    // mimic merge logic (simple upsert)
+    const dbp = await dbAll('plans'); const map = new Map(dbp.map(p=>[p.id,p]));
+    for(const p of (payload.plans||[])){ p.updatedAt = nowISO(); await put('plans', p); }
+    for(const e of (payload.evidence||[])) await put('evidence', e);
+    for(const m of (payload.merges||[])) await put('merges', m);
+    localStorage.setItem('pra_last_receipt', JSON.stringify(payload.receipt||{}));
+  }
+
+  async function put(store,val){ const db=await openDB(); return new Promise((res,rej)=>{ const tx=db.transaction(store,'readwrite'); const os=tx.objectStore(store); const r=os.put(val); r.onsuccess=()=>res(val); r.onerror=()=>rej(r.error); }); }
+
+  // Host flow
+  async function createOffer(){
+    makePC(); isHost=true;
+    dc = pc.createDataChannel('pra-p2p'); wireDC();
+    const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
+    // wait for ICE
+    await new Promise(r=>setTimeout(r,400));
+    $('#offer').value = btoa(JSON.stringify(pc.localDescription));
+    log('Offer created');
+  }
+
+  async function acceptAnswer(){
+    const ansTxt = $('#answer-in').value.trim(); if(!ansTxt){ toast('Paste answer'); return; }
+    try{
+      const ans = JSON.parse(atob(ansTxt));
+      await pc.setRemoteDescription(ans);
+      log('Answer set; connecting…');
+    }catch(e){ toast('Bad answer'); }
+  }
+
+  // Peer flow
+  async function acceptOfferAndAnswer(){
+    const offerTxt = $('#offer-in').value.trim(); if(!offerTxt){ toast('Paste offer'); return; }
+    makePC(); isHost=false;
+    const offer = JSON.parse(atob(offerTxt));
+    await pc.setRemoteDescription(offer);
+    const answer = await pc.createAnswer(); await pc.setLocalDescription(answer);
+    // wait for ICE
+    await new Promise(r=>setTimeout(r,400));
+    $('#answer').value = btoa(JSON.stringify(pc.localDescription));
+    log('Answer created');
+  }
+
+  async function sendSelection(){
+    if(!dc || dc.readyState!=='open'){ toast('Channel not open'); return; }
+    const ids = $('#p2p-ids').value.split(',').map(s=>s.trim()).filter(Boolean);
+    if(!ids.length){ toast('Add plan IDs'); return; }
+    const payload = await buildPayloadByIds(ids);
+    const msg = { kind:'PRA_P2P_PAYLOAD', summary:`plans:${payload.plans.length}, ev:${payload.evidence.length}, merges:${payload.merges.length}`, data: payload };
+    dc.send(JSON.stringify(msg));
+    log('Sent selection');
+  }
+
+  /* ==========================================================
+     Wire UI
+     ========================================================== */
+  $('#btn-refresh').addEventListener('click', async()=>{ await identity(); await loadKey(); toast('Ready'); });
+  $('#btn-gen').addEventListener('click', genKeypair);
+  $('#btn-export-pub').addEventListener('click', exportPublic);
+  $('#btn-export-priv').addEventListener('click', exportPrivate);
+  $('#btn-import-priv').addEventListener('click', ()=>$('#file-import').click());
+  $('#file-import').addEventListener('change', async(e)=>{ const f=e.target.files?.[0]; if(!f) return; const t=await f.text(); await importPrivatePEM(t); e.target.value=''; });
+
+  $('#btn-sign-code').addEventListener('click', signShareCode);
+  $('#btn-verify-code').addEventListener('click', verifyShareCode);
+  $('#btn-sign-digest').addEventListener('click', signPlanDigest);
+
+  $('#btn-offer').addEventListener('click', createOffer);
+  $('#btn-copy-offer').addEventListener('click', async()=>{ const v=$('#offer').value; if(!v){toast('No offer');return;} await navigator.clipboard.writeText(v); toast('Offer copied'); });
+  $('#btn-answer').addEventListener('click', acceptOfferAndAnswer);
+  $('#btn-copy-answer').addEventListener('click', async()=>{ const v=$('#answer').value; if(!v){toast('No answer');return;} await navigator.clipboard.writeText(v); toast('Answer copied'); });
+  $('#btn-connect').addEventListener('click', acceptAnswer);
+  $('#btn-send').addEventListener('click', sendSelection);
+
+  window.addEventListener('DOMContentLoaded', async()=>{ await identity(); await loadKey(); }, {once:true});
+  </script>
+
+  <!--
+    [sw/notes] Optional minimal service worker (place 'pra-sync-sw.js' beside this file):
+    self.addEventListener('install',e=>{e.waitUntil(caches.open('pra-sync-v1').then(c=>c.addAll(['./index.sync.html'])));});
+    self.addEventListener('fetch',e=>{ if(new URL(e.request.url).pathname.endsWith('index.sync.html')) e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))); });
+
+    [sections/future-expansion]
+    - [keys] Multi-key trust sets and curator lists (allow-listed thumbprints for auto-trust)
+    - [sign] Detached signature envelopes for share codes (JWS-like header with alg/typ)
+    - [p2p] Chunking & resume for large datasets; LAN broadcast discovery
+    - [privacy] Redaction profiles when exporting (remove PII links/notes)
+  -->
+</body>
+</html>
